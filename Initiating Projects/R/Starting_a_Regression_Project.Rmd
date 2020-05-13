@@ -1,0 +1,70 @@
+---
+title: "Starting a Regression Project"
+output: html_document
+---
+
+**Author**: Thodoris Petropoulos
+
+**Label**: Modeling Options
+
+### Scope
+The scope of this notebook is to provide instructions on how to initiate a DataRobot project for a numerical target using the R API.
+
+### Background
+Regression Analysis is the task of predicting the value of a continuous target column.
+
+Examples:
+
+- Predict Life Time Value (LTV) of customer.
+- Predicting player performance.
+- Predicting house price.
+
+The target column will always be a continuous numeric variable even though regression could also be applicable a discreet high cardinality variable.
+
+### Requirements
+
+- R version 3.6.2
+-  DataRobot API version 2.16.0. 
+Small adjustments might be needed depending on the R version and DataRobot API version you are using.
+
+Full documentation of the R package can be found here: https://cran.r-project.org/web/packages/datarobot/index.html
+
+
+#### Import Packages
+
+```{r results = 'hide', warning=FALSE, message=FALSE}
+library(datarobot)
+library(mlbench)
+
+```
+
+#### Import Dataset
+We will be loading the Boston Housing dataset. A very simple dataset for regression that is available through mlbench.
+
+```{r}
+data(BostonHousing)
+head(BostonHousing)
+```
+#### Connect to DataRobot
+Connect to DataRobot using your credentials and your endpoint. Change input below accordingly.
+```{r results = 'hide', warning=FALSE, message=FALSE}
+ConnectToDataRobot(endpoint = "YOUR_DATAROBOT_HOSTNAME", 
+                   token = "YOUR_API_KEY")
+```
+
+#### Initiate Project
+I will be initiating a project using <code>StartProject </code>:
+
+* dataSource: Data source (Could be path to file or R dataframe)
+* projectName: Name of Project
+* target: String with target variable name
+* workerCount: Amount of workers to use
+* metric: Optimisation metric to use
+* wait: Waits for autopilot to complete before moving to next chunk of code 
+
+```{r eval=FALSE}
+project <- StartProject(dataSource = BostonHousing,
+                        projectName = "MyRegressionProject",
+                        target = "medv",
+                        wait = TRUE) #Wait equals True means wait for autopilot to finish
+```

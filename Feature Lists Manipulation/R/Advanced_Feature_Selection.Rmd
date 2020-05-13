@@ -1,0 +1,162 @@
+---
+title: "Advanced Feature Selection"
+output: html_document
+---
+
+**Author**: Rajiv Shah
+**Contributors**: Emily Webber
+
+**Label**: Modeling Options
+
+### Scope
+
+The scope of this notebook is to provide instructions on how to do advanced feature selection using all of the models created during a DataRobot autopilot.
+
+### Background
+
+This is the procedure we are going to follow:
+
+* Calculate the feature importance for each trained model
+* Get the feature ranking for each trained model
+* Get the ranking distribution for each feature across models
+* Sort by mean rank and visualize
+
+### Requirements
+
+- R version 3.6.2
+-  DataRobot API version 2.16.0. 
+Small adjustments might be needed depending on the R version and DataRobot API version you are using.
+
+Full documentation of the R package can be found here: https://cran.r-project.org/web/packages/datarobot/index.html
+
+It is assumed you already have a DataRobot <code>Project</code> object and a DataRobot <code>Model </code> object.
+
+#### Import Packages
+```{r results = 'hide', warning=FALSE, message=FALSE}
+library(datarobot)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(purrr)
+```
+
+I do not want to pick all of the models. I will ignore Blender, Auto-Tuned, and models trained with a small percentage of data. Lastly, I only care about models that were trained on 'Informative Features' but this can change depending on your needs. I also limited my selection to  models that used between 64% and 80% of the data in training. 
+
+```{r echo=FALSE, results = 'hide', warning=FALSE, message=FALSE}
+#This piece of code will not show
+ConnectToDataRobot(endpoint = "YOUR_DATAROBOT_HOSTNAME", 
+                   token = "YOUR_API_KEY")
+
+project <- GetProject("YOUR_PROJECT_ID")
+allModels <- ListModels(project)
+modelFrame <- as.data.frame(allModels)
+metric <- modelFrame$validationMetric
+if (project$metric %in% c('AUC', 'Gini Norm')) {
+  bestIndex <- which.max(metric)
+} else {
+  bestIndex <- which.min(metric)
+}
+model <- allModels[[bestIndex]]
+model$modelType
+```
+
+```{r}
+models <- ListModels(project)
+bestmodels <- Filter(function(m) m$featurelistName == "Informative Features" & m$samplePct >= 64 &  m$samplePct <= 80 & !str_detect(m$modelType, 'Blender') & !str_detect(m$modelType, 'Auto-Tuned') , models)
+bestmodels <- Filter(function(m) m$samplePct >= 63, models)
+```
+
+Then, we will Collect all the feature impact info for the best models.
+
+```{r}
+all_impact<- NULL
+for(i in 1:length(bestmodels)) {  
+    featureImpact <- GetFeatureImpact(bestmodels[[i]])
+    featureImpact$modelname <- bestmodels[[i]]$modelType
+    all_impact <- rbind(all_impact,featureImpact)
+  }
+```
+
+Now we can plot these features.
+
+```{r}
+all_impact <- all_impact %>% mutate(finalnorm = impactUnnormalized/max(impactUnnormalized))
+p <- ggplot(all_impact, aes(x=reorder(featureName, finalnorm, FUN=median), y=finalnorm))
+p + geom_boxplot(fill= "#2D8FE2") + coord_flip() + theme(axis.text=element_text(size=16),
+        axis.title=element_text(size=12,face="bold"))
+```
+
+Finally, create a new feature list with the top features and re-run DataRobot's Autopilot
+
+```{r eval=FALSE}
+## Process Feature impact
+ranked_impact <- all_impact %>% group_by(featureName) %>% 
+    summarise(impact = mean(finalnorm)) %>% 
+    arrange(desc(impact))
+
+#New Feature List
+topfeatures <- pull(ranked_impact,featureName)
+No_of_features_to_select <- 10
+listname = paste0("TopFI_", No_of_features_to_select)
+Feature_id_percent_rank = CreateFeaturelist(project, listName= listname , featureNames = topfeatures[1:No_of_features_to_select])$featurelistId
+
+# Run AutoPilot on new Top Features
+StartNewAutoPilot(project,featurelistId = Feature_id_percent_rank)
+WaitForAutopilot(project)
+```
+
+
+### Determine Ideal Number of Features
+
+In addition to running autopilot on a single new feature list, you can do multiple runs of autopilot and plot the performance for each feature list length.  This can help you decide how many features to include in a model.   The code below creates a loop that does an autopilot run using the top 9, 6, 3 and 1 feature. 
+
+
+```{r eval=FALSE}
+No_of_features_to_loop <- c(9, 6, 3, 1)
+for(i in 1:length(No_of_features_to_loop)) {
+  listname = paste0("TopFI_", No_of_features_to_loop[i])
+  Feature_id_percent_rank = CreateFeaturelist(project, listName= listname , featureNames = topfeatures[1:i])$featurelistId
+  StartNewAutoPilot(project,featurelistId = Feature_id_percent_rank)
+  WaitForAutopilot(project)
+}
+```
+
+The next step is to extract the best AUC for each feature list.  The next code block uses a custom function to pull this data from an updated model list, and then graphs it using GGPLOT2. 
+
+```{r eval=FALSE}
+#Create a list of models and select the ones that used the new feature lists. 
+models <- ListModels(project)
+FI_list <- c("TOPFI_1", "TOPFI_3", "TOPFI_6", "TOPFI_9")
+unpack_func <- function(i) {
+  unpack <- models[[i]]
+  modelid <- unpack$modelId
+  auc <- unpack$metrics$AUC$validation
+  fname <- unpack$featurelistName
+ output <- c(modelid, auc, fname)
+  return(output)
+}
+# map over function and convert to dataframe
+fi_models <- map(1:length(models), unpack_func)
+output <- as.data.frame(t(sapply(fi_models, function(x) x[1:3])))
+output$V2 <- as.numeric(as.character(output$V2))
+#find the max score for each feature list. 
+result <- output %>% 
+             group_by(V3) %>%
+             filter(V2 == max(V2)) %>%
+            filter(!duplicated(V3))
+#Filter only the ones we want to plot
+graph <-  filter(result, V3 == "TopFI_1" |  V3 == "TopFI_3"  | V3 == "TopFI_6" |  V3 == "TopFI_9")
+#Create numeric for the number of features in each list. 
+graph$number_of_features <- c(1, 3, 6, 9)
+```
+
+```{r eval=FALSE}
+ggplot(data=graph, aes(x=graph$number_of_features, y=graph$V2) ) +
+  geom_line(color = "#2D8FE2")+
+  geom_point(color = "#2D8FE2" )+
+  theme(axis.text=element_text(size=16), axis.title=element_text(size=12,face="bold")) +
+  labs(title= "AUC Validation Scores") + 
+  xlab("Number of Features") + 
+  ylab("AUC") + 
+  ylim(0, 0.8)
+```

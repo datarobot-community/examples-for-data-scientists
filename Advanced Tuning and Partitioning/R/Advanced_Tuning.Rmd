@@ -1,0 +1,49 @@
+---
+title: "Advanced Tuning"
+output: html_document
+---
+
+**Author**: Thodoris Petropoulos
+
+**Label**: Modeling Options
+
+### Scope
+The scope of this notebook is to provide instructions on how to do advanced tuning using the R API.
+
+### Background
+
+DataRobot is very good at choosing optimal hyperparameters for models to maximize speed and accuracy. However, sometimes we wish to change those hyperparameters ourselves either because we know something DataRobot does not about how to maximize accuracy, we want to experiment with different approaches, or we have some other reason to use a particular parameter.
+
+#### Import Packages
+
+```{r results = 'hide', warning=FALSE, message=FALSE}
+library(datarobot)
+```
+
+### Advanced Tuning Interface
+The easiest way to do advanced tuning is to set up a model and use the <code>RunInteractiveTuning</code> function.
+
+```{r eval=FALSE}
+tuningJobId <- RunInteractiveTuning(myModel)
+```
+
+This function will guide you through an interactive step-by-step process to tune each hyperparameter of your model. You will get to see the default, current value, and possible values for each choice and then iterate through them. You can simply press ENTER to skip any hyperparameter you wish to leave at its current value. Afterwards, you will receive a jobId value that you can use to get your model:
+
+```{r eval=FALSE}
+tunedModel <- GetModelFromJobId(myModel$projectId, tuningJobId)
+```
+
+Note that occasionally the interactive tuning interface may duplicate parameters – this is because the model itself has multiple parameters with the same name (e.g., parameters for one hot encoding text values followed by parameters for one hot encoding numeric variables will use the same names). They are listed in the order they are found in the blueprint but unfortunately more user-facing information cannot be provided.
+
+### Get Data on Parameters Available for Tuning
+If you wish to see the underlying data of which parameters are available for tuning for a model and what their default, current, and possible values are, you can turn to <code>GetTuningParameters</code>:
+
+```{r eval=FALSE}
+parameters <- GetTuningParameters(myModel)
+```
+
+You can get more concisely printed tuning parameters by using <code>summary</code>:
+
+```{r eval=FALSE}
+summary(GetTuningParameters(myModel))
+```

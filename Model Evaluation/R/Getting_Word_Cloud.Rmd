@@ -1,0 +1,76 @@
+---
+title: "Getting_Word_Cloud"
+output: html_document
+---
+
+**Author**: Peter Hurford
+
+**Label**: Evaluating Models
+
+### Scope
+The scope of this notebook is to provide instructions on how to get the Word Cloud of a specific model using the R API.
+
+### Background
+The word cloud is a type of insight available for some text-processing models for datasets containing text columns. You can get information about how the appearance of each ngram (word or sequence of words) in the text field affects the predicted target value.
+
+This example will show you how to obtain word cloud data and visualize it, similar to how DataRobot visualizes the word cloud in the “Model Insights” tab interface.
+
+### Requirements
+
+- R version 3.6.2
+-  DataRobot API version 2.16.0. 
+Small adjustments might be needed depending on the R version and DataRobot API version you are using.
+
+Full documentation of the R package can be found here: https://cran.r-project.org/web/packages/datarobot/index.html
+
+It is assumed you already have a DataRobot <code>Project</code> object and a DataRobot <code>Model </code> object.
+
+#### Import Packages
+```{r results = 'hide', warning=FALSE, message=FALSE}
+library(datarobot)
+library(colormap)
+library(modelwordcloud)
+```
+
+```{r echo=FALSE, results = 'hide', warning=FALSE, message=FALSE}
+#This piece of code will not show
+ConnectToDataRobot(endpoint = "YOUR_DATAROBOT_HOSTNAME", 
+                   token = "YOUR_API_KEY")
+
+project <- GetProject("YOUR_PROJECT_ID")
+project$projectName
+allModels <- ListModels(project)
+```
+
+#### Requesting Word Cloud
+Request word cloud with <code>GetWordCloud</code> function.
+
+```{r}
+ allModels2 <- as.data.frame(allModels, simple = TRUE)
+
+# Find first available model with word-based capabilities
+for(i in 1:length(allModels2$modelId))
+{
+modelId <- allModels2$modelId[i]
+model <- GetModel(project$projectId, modelId)
+if(GetModelCapabilities(model)$hasWordCloud == TRUE)
+  {
+  # Get word cloud
+  wordCloud <- GetWordCloud(project, model$modelId)
+  }
+}
+```
+
+#### Plotting Word Cloud
+```{r}
+# Remove stop words
+wordCloud <- wordCloud[!wordCloud$isStopword, ]
+
+# Make word cloud
+colors <- c(colormap(c("#255FEC", "#2DBEF9")), colormap(c("#FFAC9D", "#D80909"), reverse = TRUE))
+suppressWarnings(wordcloud(words = wordCloud$ngram,
+                           freq = wordCloud$frequency,
+                           coefficients = wordCloud$coefficient,
+                           colors = colors,
+                           scale = c(3, 0.3)))
+```

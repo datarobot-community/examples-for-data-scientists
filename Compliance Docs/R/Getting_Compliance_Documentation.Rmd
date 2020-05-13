@@ -1,0 +1,76 @@
+---
+title: "Getting Compliance Documentation"
+output: html_document
+---
+
+**Author**: Thodoris Petropoulos
+
+**Label**: Model Management
+### Scope
+The scope of this notebook is to provide instructions on how to get Compliance Documentation documents using the R API.
+
+### Background
+Compliance documentation is a premium add-on product to DataRobot. It allows users to automatically generate and download documentation to assist with deploying models in highly regulated industries.
+
+### Requirements
+
+- R version 3.6.2
+-  DataRobot API version 2.16.0. 
+Small adjustments might be needed depending on the R version and DataRobot API version you are using.
+
+Full documentation of the R package can be found here: https://cran.r-project.org/web/packages/datarobot/index.html
+
+It is assumed you already have a DataRobot <code>Project</code> object and a DataRobot <code>Model </code> object.
+
+#### Import Packages
+
+```{r results = 'hide', warning=FALSE, message=FALSE}
+library(datarobot)
+```
+
+#### Downloading Compliance Documentation
+To download compliance documentation for a particular model, call <code>DownloadComplianceDocumentation</code> on a particular model and specify a filepath to download the documentation to. Note that it downloads in DOCX format.
+
+```{r eval=FALSE}
+DownloadComplianceDocumentation(model, "path/to/filename.docx")
+```
+
+### Creating a Custom Template
+You can also use your own custom compliance documentation templates.
+
+#### The Default Template
+First, let’s get the default template. This can be done just by using <code>GetComplianceDocTemplate</code> It downloads as a JSON file.
+
+```{r eval=FALSE}
+GetComplianceDocTemplate("path/to/filename.json")
+```
+
+#### Updating the Default Template
+A common workflow for building your own template is downloading the default template and modifying it.
+
+```{r eval=FALSE}
+DownloadComplianceDocTemplate("path/to/filename.json")
+# ...then modify the compliance doc template in your favorite editor.
+UploadComplianceDocTemplate(name = "myNewTemplate", filename = "path/to/modified_file.json")
+```
+
+Alternatively, you can construct a template via a list:
+
+```{r eval=FALSE}
+sections <- list(list("title" = "Missing Values Report",
+                      "highlightedText" = "NOTICE",
+                      "regularText" = "This dataset had a lot of Missing Values. See the chart below: {{missingValues}}",
+                      "type" = "user"),
+                 list("title" = "Blueprints",
+                      "regularText" = "{{blueprintDiagram}} /n Blueprint for this model",
+                      "type" = "user"))
+UploadComplianceDocTemplate(name = "myNewTemplateFromSections", sections = sections)
+```
+
+You can then get and download your template:
+
+```{r eval=FALSE}
+myTemplate <- ListComplianceDocTemplates(namePart = "myNewTemplateFromSections")[[1]]
+DownloadComplianceDocTemplate(myTemplate)
+
+```

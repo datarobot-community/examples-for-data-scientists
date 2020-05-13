@@ -1,0 +1,68 @@
+---
+title: "Getting_Confusion_Chart"
+output: html_document
+---
+
+**Author**: Peter Hurford
+
+**Label**: Evaluating Models
+
+### Scope
+The scope of this notebook is to provide instructions on how to get the Confusion Chart using the R API. The Code below will work **only for Multiclass Classification Projects**. For Binary Classification Projects, use the <code>GetRocCurve</code> command.
+
+This notebook will not cover creation of a DataRobot Project. It takes as a given that you have created a project using DataRobot's R API.
+
+### Background
+
+The confusion matrix for a multiclass classification project will be a 𝑁×𝑁 matrix, with the left axis showing the true class of an observation and the top axis showing the class assigned to the observation by the model. Each element 𝑖,𝑗 of the matrix would be the number of items with true class 𝑖 that were classified as being in class 𝑗.
+
+Some important definitions: 
+
+**F1**: The F1 score for each class.
+
+**Precision**: The precision statistic for each class.
+
+**Recall**: The recall statistic for each class.
+
+**Actual Count**: The number of records for each class that actually are that class.
+
+**Predicted Count**: The number of times each class was predicted.
+
+### Requirements
+
+- R version 3.6.2
+-  DataRobot API version 2.16.0. 
+Small adjustments might be needed depending on the R version and DataRobot API version you are using.
+
+Full documentation of the R package can be found here: https://cran.r-project.org/web/packages/datarobot/index.html
+
+It is assumed you already have a DataRobot <code>Project</code> object and a DataRobot <code>Model </code> object.
+
+#### Import Packages
+```{r results = 'hide', warning=FALSE, message=FALSE}
+library(datarobot)
+```
+
+```{r echo=FALSE, results = 'hide', warning=FALSE, message=FALSE}
+#This piece of code will not show
+ConnectToDataRobot(endpoint = "https:YOUR_DATAROBOT_HOSTNAME", 
+                   token = "YOUR_API_KEY")
+
+project <- GetProject("YOUR_PROJECT_IDModels <- ListModels(project)
+modelFrame <- as.data.frame(allModels)
+metric <- modelFrame$validationMetric
+if (project$metric %in% c('AUC', 'Gini Norm')) {
+  bestIndex <- which.max(metric)
+} else {
+  bestIndex <- which.min(metric)
+}
+model <- allModels[[bestIndex]]
+model$modelType
+```
+
+#### Requesting Confusion Chart Data
+
+```{r}
+confusionChart <- GetConfusionChart(model, source = DataPartition$VALIDATION)
+head(confusionChart)
+```

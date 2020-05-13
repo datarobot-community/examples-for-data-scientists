@@ -1,0 +1,76 @@
+---
+title: "Starting a Binary Classification Project"
+output: html_document
+---
+
+**Author**: Thodoris Petropoulos
+
+**Label**: Modeling Options
+
+### Scope
+The scope of this notebook is to provide instructions on how to initiate a DataRobot project manually where the user has the option to choose which models/blueprints he wants to initiate. The procedure below should work for any type of problem you are trying to solve (regression, classification, time series, etc).
+
+### Requirements
+
+- R version 3.6.2
+-  DataRobot API version 2.16.0. 
+Small adjustments might be needed depending on the R version and DataRobot API version you are using.
+
+Full documentation of the R package can be found here: https://cran.r-project.org/web/packages/datarobot/index.html
+
+#### Import Packages
+
+```{r results = 'hide', warning=FALSE, message=FALSE}
+library(datarobot)
+library(mlbench)
+```
+
+#### Import Dataset
+We will be loading the breast cancer dataset. A very simple binary classification dataset that is available through the mlbench package.
+
+```{r}
+data(BreastCancer)
+head(BreastCancer)
+```
+
+#### Connect to DataRobot
+Connect to DataRobot using your credentials and your endpoint. Change input below accordingly.
+```{r results = 'hide', warning=FALSE, message=FALSE}
+ConnectToDataRobot(endpoint = "YOUR_HOSTNAME", 
+                   token = "YOUR_API_KEY")
+```
+
+#### Initiate Project
+We will be initiating the project using <code>autopilot_on = False</code>. This way DataRobot will not start building models until we specify which ones we want to build
+
+```{r}
+project <- StartProject(dataSource = BreastCancer,
+                        projectName = "myBinaryClassificationProject",
+                        target = "Class",
+                        mode = "manual"
+                        )
+```
+
+#### Find all of the blueprints
+We can use the <code>Listblueprints</code> method to see all of the blueprints DataRobot generated.
+
+```{r}
+blueprints <- ListBlueprints(project)
+```
+
+Now that we have the Blueprints, we can search for a specific blueprint.
+For example, all models that have "Gradient" in their name.
+
+```{r}
+models_to_run<- blueprints[grepl("Gradient", unlist(lapply(blueprints,"[", "modelType")))]
+```
+
+#### Lets now initiate these models
+We can use the <code>RequestNewModel</code> method to initiate modeling for a specific blueprint.
+
+```{r}
+for (i in 1:length(models_to_run)){
+  job <- RequestNewModel(project, models_to_run[[i]])
+  WaitForJobToComplete(project, job,maxWait=600)
+}
+```

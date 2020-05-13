@@ -1,0 +1,104 @@
+---
+title: "Model Management and Monitoring"
+output: html_document
+---
+
+**Author**: Thodoris Petropoulos
+
+**Label**: Model Deployment
+
+### Scope
+
+The scope of this notebook is to provide instructions on how to do manage models through the R API. This includes deployment, replacement, deletion, and monitoring capabilities.
+
+### Background
+
+Deployment is the central hub for users to deploy, manage and monitor their models. The following commands can be used to manage deployments.
+
+### Requirements
+
+- R version 3.6.2
+-  DataRobot API version 2.17.0. 
+Small adjustments might be needed depending on the R version and DataRobot API version you are using.
+
+Full documentation of the R package can be found here: https://cran.r-project.org/web/packages/datarobot/index.html
+
+It is assumed you already have a DataRobot <code>Project</code> object and a DataRobot <code>Model </code> object.
+
+#### Import Packages
+
+```{r results = 'hide', warning=FALSE, message=FALSE}
+library(datarobot)
+
+ConnectToDataRobot(endpoint = "YOUR_DATAROBOT_HOSTNAME", 
+                   token = "YOUR_API_KEY")
+```
+
+#### Create a Deployment
+
+When creating a new deployment, a DataRobot model_id and label must be provided. A description can be optionally provided to document the purpose of the deployment.
+
+The default prediction server is used when making predictions against the deployment, and is a requirement for creating a deployment on DataRobot cloud. For on-prem installations, a user must not provide a default prediction server and a pre-configured prediction server will be used instead. Refer to ListPredictionServers for more information on retrieving available prediction servers.
+
+
+```{r eval=FALSE}
+predictionServer <- ListPredictionServers()[[1]]
+deployment <- CreateDeployment(model,
+                               label = "YOUR_NEW_DEPLOYMENT_NAME",
+                               description = "A new deployment for demo purposes",
+                               defaultPredictionServerId = predictionServer)
+
+```
+
+### List Deployments
+Use the following command to list deployments a user can view.
+
+```{r eval=FALSE}
+ListDeployments()
+```
+
+### Retrieve a Deployment
+It is possible to retrieve a single deployment with its identifier, rather than list all deployments.
+
+```{r eval=FALSE}
+GetDeployment("YOUR_DEPLOYMENT_ID")
+```
+
+#### Delete a Deployment
+To mark a deployment as deleted, use the following command.
+
+```{r eval=FALSE}
+DeleteDeployment(deployment)
+```
+
+#### Model Replacement
+The model of a deployment can be replaced effortlessly without interruptions of predictions.
+Model replacement is an asynchronous process, which means there are some preparatory works to complete before the process is fully finished. However, predictions made against this deployment will start using the new model as soon as you initiate the process. The <code>ReplaceDeployedModel</code> function won’t return until this asynchronous process is fully finished.
+Alongside the identifier of the new model, a reason is also required. The reason is stored in model history of the deployment for bookkeeping purpose. An enum <code>ModelReplacementReason</code> is provided for convenience, all possible values are documented below:
+
+
+- ModelReplacementReason$Accuracy
+- ModelReplacementReason$DataDrift
+- ModelReplacementReason$Errors
+- ModelReplacementReason$ScheduledRefresh
+- ModelReplacementReason$ScoringSpeed
+- ModelReplacementReason$Other
+
+Here is an example of model replacement:
+
+```{r eval=FALSE}
+deployment <- GetDeployment("YOUR_DEPLOYMENT_ID")
+ReplaceDeployedModel(deployment, newModel, ModelReplacementReason$Accuracy)
+```
+
+#### Validation - Before Replacement
+Before initiating the model replacement request, it is usually a good idea to use the <code>ValidateReplaceDeployedModel()</code> function to validate if the new model can be used as a replacement.
+
+The <code>ValidateReplaceDeployedModel()</code> function returns the validation status, a message and a checks dictionary. If the status is ‘passing’ or ‘warning’, use <code>ReplaceDeployedModel()</code> to perform model the replacement. If status is ‘failing’, refer to the checks dict for more details on why the new model cannot be used as a replacement.
+
+```{r eval=FALSE}
+deployment <- GetDeployment("YOUR_DEPLOYMENT_ID")
+validation <- ValidateReplaceDeployedModel(deployment, newModel)
+print(validation$status)  # Look here to see if passing
+print(validation$checks)  # Look here if not passing to see why
+```

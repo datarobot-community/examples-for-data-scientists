@@ -1,0 +1,84 @@
+---
+title: "Getting Prediction and Prediction Explanations"
+output: html_document
+---
+
+**Author**: Thodoris Petropoulos
+
+**Label**: Model Deployment
+
+### Scope
+
+The scope of this notebook is to provide instructions on how to get predictions and prediction explanations out of a trained model using the R API.
+
+### Background
+
+The main ways you can get predictions out of DataRobot using R would be the modeling API and the prediction API.
+
+**Modeling API**: You can use the modelling API if you use R or R and there are multiple ways you can interact with it.
+
+**Prediction API**: Any project can be called with the Prediction API if you have prediction servers. This is a simple REST API. Click on a model in the UI, then "Deploy Model" and "Activate now". You'll have access to a R code snippet to help you interact with it. You can also deploy the model through the R API.
+
+For the purposes of this tutorial, we will focus on the Modeling API. Note that this particular method of scoring utilizes modeling workers. This means that if someone is using these workers for modeling, your prediction is going to have to wait. This method of scoring is good for testing but not for deployment. For actual deployment, please deploy the model as a REST API through DataRobot's UI or through the API.
+
+### Requirements
+
+- R version 3.6.2
+-  DataRobot API version 2.16.0. 
+Small adjustments might be needed depending on the R version and DataRobot API version you are using.
+
+Full documentation of the R package can be found here: https://cran.r-project.org/web/packages/datarobot/index.html
+
+It is assumed you already have a DataRobot <code>Project</code> object and a DataRobot <code>Model </code> object.
+
+```{r results = 'hide', warning=FALSE, message=FALSE}
+library(datarobot)
+```
+
+#### Requesting Predictions
+
+Before actually requesting predictions, you should upload the dataset you wish to predict via <code>UploadPredictionDataset</code>. You could also use the <code>Predict </code> function directly in order to make predictions.
+
+```{r eval=FALSE}
+# Uploading the testing dataset
+scoring <- UploadPredictionDataset(project, dataSource = test)
+
+# Requesting prediction
+predict_job_id <- RequestPredictions(project, modelId = model$modelId, datasetId = scoring$id)
+
+# Grabbing predictions
+predictions_prob <- GetPredictions(project, 
+                                   predictId = predict_job_id, 
+                                   type = "probability")
+```
+
+#### Requesting Prediction Explanations
+In order to create PredictionExplanations for a particular model and dataset, use the <code>GetPredictionExplanations</code> function:
+
+```{r eval=FALSE}
+explanations <- GetPredictionExplanations(model, test)
+```
+
+#### Time Series Projects Caveats
+Prediction datasets are uploaded as normal predictions. However, when uploading a prediction dataset, a new parameter forecastPoint can be specified. The forecast point of a prediction dataset identifies the point in time relative which predictions should be generated, and if one is not specified when uploading a dataset, the server will choose the most recent possible forecast point. The forecast window specified when setting the partitioning options for the project determines how far into the future from the forecast point predictions should be calculated.
+
+**Important Note**:
+When uploading a dataset for Time Series projects scoring, you need to include the actual values from previous dates depending on the feature derivation setup. For example, if feature derivation window is -10 to -1 days and you want to forecast sales for the next 3 days, your dataset would look like this:
+
+| date       | sales | Known_in_advance_feature |
+|------------|-------|--------------------------|
+| 01/01/2019 | 130   | AAA                      |
+| 02/01/2019 | 123   | VVV                      |
+| 03/01/2019 | 412   | BBB                      |
+| 04/01/2019 | 321   | DDD                      |
+| 05/01/2019 | 512   | DDD                      |
+| 06/01/2019 | 623   | VVV                      |
+| 07/01/2019 | 356   | CCC                      |
+| 08/01/2019 | 133   | AAA                      |
+| 09/01/2019 | 356   | CCC                      |
+| 10/01/2019 | 654   | DDD                      |
+| 11/01/2019 |       | BBB                      |
+| 12/01/2019 |       | CCC                      |
+| 13/01/2019 |       | DDD                      |
+
+DataRobot will detect your forecast point as 10/01/2019 and then it will calculate lag features and make predictions for the missing dates.

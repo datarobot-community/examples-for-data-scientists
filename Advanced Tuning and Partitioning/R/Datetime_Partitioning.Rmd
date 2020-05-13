@@ -1,0 +1,62 @@
+---
+title: "Datetime Partitioning"
+output: html_document
+---
+
+**Author**: Thodoris Petropoulos
+
+**Label**: Modeling Options
+
+### Scope
+
+The scope of this notebook is to provide instructions on how to do datetime partitioning using the R API.
+
+### Background
+
+When dividing your data for model training and validation, DataRobot will randomly choose a set of rows from your dataset to assign amongst different cross validation folds. This will verify that you have not overfit your model to the training set and that the model can perform well on new data. However when your data has an intrinsic time based component, then you have to be even more careful about target leakage.  DataRobot now posseses datetime partitioning which will be diligent within model training & validation to guard against this, but you should always use your domain exerptise to evaluate your features prior to modeling.
+
+Let’s look at how we would frame a problem with a time component within DataRobot. This project basically simulated what you would get if you tried "Out of Time Validation" within DataRobot interface which is **not the same as Time Series projects**, even though the way we define backtests is very similar.
+
+### Requirements
+
+- R version 3.6.2
+-  DataRobot API version 2.16.0. 
+Small adjustments might be needed depending on the R version and DataRobot API version you are using.
+
+Full documentation of the R package can be found here: https://cran.r-project.org/web/packages/datarobot/index.html
+
+It is assumed you already have a DataRobot <code>Project</code> object and a DataRobot <code>Model </code> object.
+
+```{r results = 'hide', warning=FALSE, message=FALSE}
+library(datarobot)
+```
+
+#### Running a DataRobot Project with a datetime partition
+
+```{r eval =FALSE}
+partition <- CreateDatetimePartitionSpecification(datetimePartitionColumn = "date_column", numberOfBacktests = 5)
+
+proj <- StartProject(dataSource = data,
+                     projectName = "project_name",
+                     target = "target",
+                     partition = partition)
+```
+
+We took advantage of DataRobot’s automated partition date selection after we specified the number of backtests to use. DataRobot allows further control, where we can further specify the validation start date as well as duration. Let’s look at an example below.
+
+#### Create Backtest Specifications
+
+```{r eval=FALSE}
+backtest <- list()
+# Dates are not project specific but rather example dates
+backtest[[1]] <- CreateBacktestSpecification(0, ConstructDurationString(),
+                                             "1989-12-01", ConstructDurationString(days = 100))
+backtest[[2]] <- CreateBacktestSpecification(1, ConstructDurationString(), "1999-10-01",
+                                             ConstructDurationString(days = 100))
+# create desired partition specification
+partition <- CreateDatetimePartitionSpecification("date_column",
+                                                  numberOfBacktests = 2,
+                                                  backtests = backtest)
+```
+
+The above methods will change the backtest specification for the first and second backtest.

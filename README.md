@@ -1,27 +1,13 @@
-# PROJECT TITLE
+# API Samples for Data Scientists
 
-TODO: Add a short description of the project.
-It should include the following:
-- What this repository is
-- Who is it for
-- What are the dependencies 
+Sample scripts and notebooks for the Data Science Learning path in the DataRobot Community Learning Center.
+You can find the corresponding articles in the learning center - https://community.datarobot.com/t5/guided-ai-learning/data-science-learning-path/ta-p/1892
+
+This repository contains Python notebooks and R Markdown guides.
 
 ## Usage
 
-TODO: Specify how to use this project
-This can include running the scripts, or where to find API docs if it's a library, command line tool, or similar.
-
-## Repository Contents
-
-TODO: Specify what this repository contains, for example if it contains multiple self contained sub-projects, like with Notebooks scripts that can be used independently.
-
-In some cases you can skip this section.
-
-## Setup/Installation
-
-TODO: Specify what's required to set this project up for usage
-
-In some cases you can skip this section.
+For each respective guide, follow the instructions in its own `.ipynb` or `.Rmd` file. 
 
 ## Development and Contributing
 

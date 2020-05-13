@@ -1,0 +1,82 @@
+---
+title: "Getting_ROC_Curve"
+output: html_document
+---
+
+**Author**: Peter Hurford
+
+**Label**: Evaluating Models
+
+### Scope
+The scope of this notebook is to provide instructions on how to get ROC Curve data of a specific model using the R API.
+
+### Background
+Insights provided by the ROC Curve are helpful in checking the performance of machine learning models. 
+
+The receiver operating characteristic curve, or ROC curve, is a graphical plot that illustrates the performance of a binary classifier system as its discrimination threshold is varied. The curve is created by plotting the true positive rate (TPR) against the false positive rate (FPR) at various threshold settings.
+
+### Requirements
+
+- R version 3.6.2
+-  DataRobot API version 2.16.0. 
+Small adjustments might be needed depending on the R version and DataRobot API version you are using.
+
+Full documentation of the R package can be found here: https://cran.r-project.org/web/packages/datarobot/index.html
+
+It is assumed you already have a DataRobot <code>Project</code> object and a DataRobot <code>Model</code> object.
+
+#### Import Packages
+
+```{r results = 'hide', warning=FALSE, message=FALSE}
+library(datarobot)
+library(ggplot2)
+```
+#### Requesting ROC Curve Data
+
+ROC curve data can be generated for a specific data partition (validation, cross validation, or holdout) or for all the data partition using the <code>GetRocCurve</code> method.
+
+To retrieve ROC curve information:
+
+```{r echo=FALSE, results = 'hide', warning=FALSE, message=FALSE}
+#This piece of code will not show
+ConnectToDataRobot(endpoint = "YOUR_DATAROBOT_HOSTNAME", 
+                   token = "YOUR_API_KEY")
+
+project <- GetProject("YOUR_PROJECT_ID")
+allModels <- ListModels(project)
+modelFrame <- as.data.frame(allModels)
+metric <- modelFrame$validationMetric
+if (project$metric %in% c('AUC', 'Gini Norm')) {
+  bestIndex <- which.max(metric)
+} else {
+  bestIndex <- which.min(metric)
+}
+model <- allModels[[bestIndex]]
+model$modelType
+```
+
+```{r}
+roc <- GetRocCurve(model)
+head(roc)
+```
+
+#### Plotting ROC Curve
+```{r}
+ValidationRocCurve <- GetRocCurve(model)
+ValidationRocPoints <- ValidationRocCurve[["rocPoints"]]
+ggplot(ValidationRocPoints, aes(x = falsePositiveRate, y = truePositiveRate)) + geom_line()
+```
+
+#### Threshold Operations
+You can get the recommended threshold value with maximal F1 score. That is the same threshold that is preselected in DataRobot when you open the “ROC curve” tab.
+
+```{r}
+threshold <- ValidationRocPoints$threshold[which.max(ValidationRocPoints$f1Score)]
+```
+
+You can also estimate metrics for different threshold values. This will produce the same results as updating the threshold on the DataRobot “ROC curve” tab.
+
+```{r}
+ValidationRocPoints[ValidationRocPoints$threshold == tail(Filter(function(x) x > threshold,
+                                                                 ValidationRocPoints$threshold), 1), ]
+```

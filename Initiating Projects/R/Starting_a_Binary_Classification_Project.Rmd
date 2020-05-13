@@ -1,0 +1,73 @@
+---
+title: "Starting a Binary Classification Project"
+output: html_document
+---
+
+**Author**: Thodoris Petropoulos
+
+**Label**: Modeling Options
+
+### Scope
+The scope of this notebook is to provide instructions on how to initiate a DataRobot project for a Binary Classification target using the R API.
+
+### Background
+Binary classification is the task of classifying the elements of a given set into two groups.
+
+Examples:
+
+- A customer is a churner or not.
+- A loan is going to default or not.
+- A patient has a disease or not.
+
+Most commonly, the target column will have values:
+
+- 0/1
+- Yes/No
+- True/False
+
+### Requirements
+
+- R version 3.6.2
+-  DataRobot API version 2.16.0. 
+Small adjustments might be needed depending on the R version and DataRobot API version you are using.
+
+Full documentation of the R package can be found here: https://cran.r-project.org/web/packages/datarobot/index.html
+
+#### Import Packages
+
+```{r results = 'hide', warning=FALSE, message=FALSE}
+library(datarobot)
+library(mlbench)
+```
+
+#### Import Dataset
+We will be loading the breast cancer dataset. A very simple binary classification dataset that is available through the mlbench package.
+
+```{r}
+data(BreastCancer)
+head(BreastCancer)
+```
+
+#### Connect to DataRobot
+Connect to DataRobot using your credentials and your endpoint. Change input below accordingly.
+```{r results = 'hide', warning=FALSE, message=FALSE}
+ConnectToDataRobot(endpoint = "YOUR_DATAROBOT_HOSTNAME", 
+                   token = "YOUR_API_KEY")
+```
+
+#### Initiate Project
+I will be initiating a project using <code>StartProject </code>:
+
+* dataSource: Data source (Could be path to file or R dataframe)
+* projectName: Name of Project
+* target: String with target variable name
+* workerCount: Amount of workers to use
+* metric: Optimisation metric to use
+* wait: Waits for autopilot to complete before moving to next chunk of code 
+
+```{r eval=FALSE}
+project <- StartProject(dataSource = BreastCancer,
+                        projectName = "myBinaryClassificationProject",
+                        target = "Class",
+                        wait = TRUE)
+```

@@ -1,0 +1,193 @@
+---
+title: "Starting a Time Series Project"
+output: html_document
+---
+
+**Author**: Thodoris Petropoulos
+
+**Label**: Modeling Options
+
+### Scope
+The scope of this notebook is to provide instructions on how to initiate a DataRobot project for a Time Series problem using the R API. This notebook also covers calendars and feature settings for time series projects.
+
+### Background
+Time series modeling is the use of a machine learning model to predict future values of the target column based on previously observed values.
+
+Examples:
+
+- Demand Forecasting
+- Staffing
+- Sales Forecast
+
+### Requirements
+
+- R version 3.6.2
+-  DataRobot API version 2.16.0. 
+Small adjustments might be needed depending on the R version and DataRobot API version you are using.
+
+Full documentation of the R package can be found here: https://cran.r-project.org/web/packages/datarobot/index.html
+
+
+#### Import Packages
+
+```{r results = 'hide', warning=FALSE, message=FALSE}
+library(datarobot)
+```
+
+#### Dataset
+For this tutorial, we are going to generate some simple time series data.
+
+```{r}
+toSampleFrom <- seq(from=0, to=1, by=.01)
+target <- sample(toSampleFrom, size=1097, replace=TRUE)
+
+date <- seq(as.Date("2011-01-01"), as.Date("2014-01-01"), by="days")
+
+data <- data.frame(date, target)
+head(data)
+
+```
+
+#### Connect to DataRobot
+Connect to DataRobot using your credentials and your endpoint. Change input below accordingly.
+
+```{r results = 'hide', warning=FALSE, message=FALSE}
+ConnectToDataRobot(endpoint = "YOUR_DATAROBOT_HOSTNAME", 
+                   token = "YOUR_API_KEY")
+```
+
+#### Initiate Time Series Project
+To set up a time series project, use the new time series specific parameters found in <code>CreateDatetimePartitionSpecification </code>:
+
+* useTimeSeries - set this to TRUE to enable time series for the project.
+* defaultToKnownInAdvance - set this to TRUE to default to treating all features as known in advance features. Otherwise they will not be handled as known in advance features. See the prediction documentation for more information.
+* featureDerivationWindowStart - the offset into the past to the start of the feature derivation window.
+* featureDerivationWindowEnd - the offset into the past to the end of the feature derivation window.
+* forecastWindowStart - the offset into the future to the start of the forecast window.
+* forecastWindowEnd - the offset into the future to the end of the forecast window.
+* featureSettings - A list of settings. Can be used to set individual features to “known in advance”.
+* treatAsExponential - Used to specify whether to treat the data as an exponential trend, which will apply a log-transform. By default, set as “auto”, this can be inferred automatically. See possible values in TreatAsExponential.
+* differencingMethod - Used to specify a differencing method to apply if data is stationary. By default, set as “auto”, this can be inferred automatically. See possible values in DifferenicngMethod.
+* periodicities - A list of periodicities of different timestamps, specified in a list of lists.
+* windowsBasisUnit - The unit to use for feature derivation and forecast windows. Defaults to the inferred time step. If "ROW", will define the window with a number of rows.
+
+```{r eval=FALSE}
+partition <- CreateDatetimePartitionSpecification(datetimePartitionColumn = "date",
+                                                  useTimeSeries = TRUE)
+StartProject(projectName = 'MySingleTimeSeriesProject', dataSource = data, target = "target",
+             partition = partition, metric = "RMSE")
+
+```
+
+#### Feature Derivation Window
+
+The Feature Derivation window represents the rolling window that is used to derive time series features and lags, relative to the Forecast Point. It is defined in terms of <code>featureDerivationWindowStart</code> and <code>featureDerivationWindowEnd</code> which are integer values representing datetime offsets in terms of the <code>timeUnit</code> (e.g. hours or days).
+The Feature Derivation Window start and end must be less than or equal to zero, indicating they are positioned before the forecast point. Additionally, the window must be specified as an integer multiple of the <code>timeStep</code> which defines the expected difference in time units between rows in the data.
+Enough rows of historical data must be provided to cover the span of the effective Feature Derivation Window (which may be longer than the project’s Feature Derivation Window depending on the differencing settings chosen). The effective Feature Derivation Window of any model can be checked via the <code>effectiveFeatureDerivationWindowStart</code> and <code>effectiveFeatureDerivationWindowEnd</code> attributes of a datetime model. See <code>GetDatetimeModel</code>.
+The window is closed, meaning the edges are considered to be inside the window.
+This information is added to your <code>CreateDatetimePartitionSpecification</code> call like so:
+
+```{r}
+partition <- CreateDatetimePartitionSpecification(datetimePartitionColumn = "date",
+                                                  featureDerivationWindowStart = -24,
+                                                  featureDerivationWindowEnd = -12,
+                                                  useTimeSeries = TRUE)
+```
+
+#### Forecast Window
+The Forecast Window represents the rolling window of future values to predict, relative to the Forecast Point. It is defined in terms of the <code>forecastWindowStart</code> and <code>forecastWindowEnd</code>, which are positive integer values indicating datetime offsets in terms of the <code>timeUnit</code> (e.g. hours or days).
+The Forecast Window start and end must be positive integers, indicating they are positioned after the forecast point. Additionally, the window must be specified as an integer multiple of the <code>timeStep</code> which defines the expected difference in time units between rows in the data.
+The window is closed, meaning the edges are considered to be inside the window.
+This information is added to your <code>CreateDatetimePartitionSpecification</code> call like so:
+
+
+```{r}
+partition <- CreateDatetimePartitionSpecification(datetimePartitionColumn = "timestamp",
+                                                  forecastWindowStart = 1,
+                                                  forecastWindowEnd = 10,
+                                                  useTimeSeries = TRUE)
+```
+
+#### Feature Settings - Enable/Disable known in advance
+When setting up a time series project, input features could be identified as known in advance features. These features are not used to generate lags, and are expected to be known for the rows in the forecast window at predict time (e.g. “how much money will have been spent on marketing”, “is this a holiday”).
+To start a time series project, use <code>CreateDatetimePartitionSpecification</code> and specify the <code>feaureSettings</code>. (Note that this is for illustrative purposes only - this project will not actually build because the 10 data points are smaller than the 100 datapoint minimum required.)
+
+```{r}
+partition <- CreateDatetimePartitionSpecification(datetimePartitionColumn = "date",
+                                                  useTimeSeries = TRUE,
+                                                  featureSettings = list(list("featureName" = "holiday",
+                                                                              "knownInAdvance" = TRUE),
+                                                                         list("featureName" = "weekend",
+                                                                              "knownInAdvance" = TRUE)))
+```
+
+#### Feature Settings - Enable/Disable feature derivation
+DataRobot does a lot of good work to automatically derive features that may be useful (e.g., lags). You can always see these features clearly by calling <code>GetTimeSeriesFeatureDerivationLog</code>. However, from time to time, it may be useful to disable DataRobot’s automatic feature engineering for a particular feature (e.g., so you can derive lags yourself manually). To do this, we can use the <code>featureSettings</code> to turn off derived features for a particular base feature:
+
+```{r}
+partition <- CreateDatetimePartitionSpecification(datetimePartitionColumn = "timestamp",
+                                                  useTimeSeries = TRUE,
+                                                  featureSettings = list(list("featureName" = "sales",
+                                                                              "doNotDerive" = TRUE)))
+```
+
+
+#### Multiseries
+
+The API also supports <strong>multiseries</strong>, or data with multiple time series delineated by multiseries ID columns. To create this, create a project, then create a datetime partition specification that specifies the <code>datetimePartitionColumn</code> (the column with your date in it) and the <code>multiseriesIdColumns</code> (a list of columns specifying the ids that delineate the multiseries).
+
+```{r}
+partition <- CreateDatetimePartitionSpecification(datetimePartitionColumn = "timestamp",
+                                                  useTimeSeries = TRUE,
+                                                  multiseriesIdColumns = "series_id")
+```
+
+
+#### Prediction Intervals
+For each model, prediction intervals estimate the range of values DataRobot expects actual values of the target to fall within. They are similar to a confidence interval of a prediction, but are based on the residual errors measured during the backtesting for the selected model.
+Note that because calculation depends on the backtesting values, prediction intervals are not available for predictions on models that have not had all backtests completed. Additionally, prediction intervals are not available when the number of points per forecast distance is less than 10, due to insufficient data.
+In a prediction request, users can specify a prediction intervals size, which specifies the desired probability of actual values falling within the interval range. Larger values are less precise, but more conservative. For example, specifying a size of 80 will result in a lower bound of 10% and an upper bound of 90%. More generally, for a specific <code>predictionIntervalsSize</code>, the upper and lower bounds will be calculated as follows:
+<ul>
+<li>predictionIntervalUpperBound = 50% + (<code>predictionIntervalsSize</code> / 2)</li>
+<li>predictionIntervalLowerBound = 50% - (<code>predictionIntervalsSize</code> / 2)</li>
+</ul>
+To view prediction intervals data for a prediction, the prediction needs to have been created using <code>Predict</code> and specifying <code>includePredictionIntervals = TRUE</code>. The size for the prediction interval can be specified with the <code>predictionIntervalsSize</code> parameter for the same function, and will default to 80 if left unspecified. Specifying these fields will result in prediction interval bounds being included in the retrieved prediction data for that request. See <code>Predict</code> for more details.
+
+
+#### Calendars
+A calendar is an external file that lists events for a time series, such as holidays. For example, we might consider this calendar:
+
+```{r}
+date <- c(as.Date("2019-01-01"),as.Date("2011-01-04"),as.Date("2011-11-29"))
+event <- c('New Year','National Spaghetti Day', 'Black Friday')
+
+calendar <- data.frame(date, event)
+head(calendar)
+```
+
+To create a calendar file from a csv file:
+
+```{r}
+write.csv(calendar,"calendar.csv", row.names = FALSE)
+cal <- CreateCalendar("calendar.csv")
+head(cal)
+```
+
+#### Making a Time Series Project using a Calendar
+The main point of having calendars is not to admire them, but to use them for time series modeling! To do this, make a datetime partition like you usually would and pass the calendar using the <code>calendar</code> parameter.
+
+```{r}
+partition <- CreateDatetimePartitionSpecification("date",
+                                                  autopilotDataSelectionMethod = "duration",
+                                                  useTimeSeries = TRUE,
+                                                  calendar = cal)
+```
+                                                  
+
+#### Listing all available calendars
+To list all of the available calendars use the dr.CalendarFile.list command                                                 
+```{r}
+calendars <- ListCalendars()
+calendar <- calendars[[1]]
+print(calendar)
+```

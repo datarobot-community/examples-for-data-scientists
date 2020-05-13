@@ -1,0 +1,72 @@
+---
+title: "Starting a Regression Project"
+output: html_document
+---
+
+**Author**: Thodoris Petropoulos
+
+**Label**: Modeling Options
+
+### Scope
+The scope of this notebook is to provide instructions on how to initiate a DataRobot project for a Multiclass Classification target using the R API.
+
+### Background
+Multiclass classification is the task of classifying the elements of a given set into more than two groups.
+
+Examples:
+
+- A customer would be more interested in one of A,B,C,D.. products.
+- A patient has one of A,B,C,D.. diseases.
+- A customer would have a higher propensity to respond to one of A,B,C,D.. campaigns.
+
+Most commonly, the target column will have values:
+
+- AAA/BBB/CCC/..(example text)
+- 0/1/2/3/4/..
+
+### Requirements
+
+- R version 3.6.2
+-  DataRobot API version 2.16.0. 
+Small adjustments might be needed depending on the R version and DataRobot API version you are using.
+
+Full documentation of the R package can be found here: https://cran.r-project.org/web/packages/datarobot/index.html
+
+
+#### Import Packages
+
+```{r results = 'hide', warning=FALSE, message=FALSE}
+library(datarobot)
+library(datasets)
+```
+
+#### Import Dataset
+We will be loading the Boston Housing dataset. A very simple dataset for regression that is available through the datasets library.
+
+```{r}
+data(iris)
+head(iris)
+```
+#### Connect to DataRobot
+Connect to DataRobot using your credentials and your endpoint. Change input below accordingly.
+```{r results = 'hide', warning=FALSE, message=FALSE}
+ConnectToDataRobot(endpoint = "YOUR_DATAROBOT_HOSTNAME", 
+                   token = "YOUR_API_KEY")
+```
+
+#### Initiate Project
+I will be initiating a project using <code>StartProject </code>:
+
+* dataSource: Data source (Could be path to file or R dataframe)
+* projectName: Name of Project
+* target: String with target variable name
+* workerCount: Amount of workers to use
+* metric: Optimisation metric to use
+* wait: Waits for autopilot to complete before moving to next chunk of code 
+
+```{r eval=FALSE}
+project <- StartProject(dataSource = iris,
+                        projectName = "MyMulticlassClassificationProject",
+                        target = "Species",
+                        wait = TRUE) #Wait equals True means wait for autopilot to finish
+```
