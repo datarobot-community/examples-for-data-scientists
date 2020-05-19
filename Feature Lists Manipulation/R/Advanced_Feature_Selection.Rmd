@@ -24,7 +24,7 @@ This is the procedure we are going to follow:
 ### Requirements
 
 - R version 3.6.2
--  DataRobot API version 2.16.0. 
+-  DataRobot API version 2.2.0. 
 Small adjustments might be needed depending on the R version and DataRobot API version you are using.
 
 Full documentation of the R package can be found here: https://cran.r-project.org/web/packages/datarobot/index.html
