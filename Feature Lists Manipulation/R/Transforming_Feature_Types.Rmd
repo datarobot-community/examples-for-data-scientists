@@ -1,0 +1,167 @@
+---
+title: "Advanced Feature Selection"
+output: html_document
+---
+
+**Author**: Chester Ismay
+**Contributors**: Peter Simon
+
+**Label**: Modeling Options
+
+### Scope
+
+The scope of this document is to provide instructions on how to transform feature types within DataRobot using R.
+
+### Background
+
+Transforming features to a different type that more closely aligns with subject matter expertise regarding the data can sometimes lead to improved model performance.
+
+### Requirements
+
+- R version 3.6.2 +
+-  DataRobot API version 2.1.7.
+
+Small adjustments might be needed depending on the R version and DataRobot API version you are using.
+
+Full documentation of the R package can be found here: https://cran.r-project.org/web/packages/datarobot/index.html
+
+```{r include=FALSE}
+knitr::opts_chunk$set(results = "hide", warning = FALSE, message = FALSE)
+```
+
+#### Import Packages
+
+```{r}
+library(datarobot)
+library(purrr)
+library(tibble)
+library(stringr)
+```
+
+The data used below corresponds to different features related to trying to predict late shipments. The data and more information is available [here](https://data.pepfar.net/additionalData).
+
+<!-- Can choose not to show the chunk below too if that's better -->
+
+```{r}
+url <- "S3_BUCKET_WITH_DATA.CSV"
+project_object <- StartProject(
+  dataSource = url,
+  projectName = paste("Late Shipment", Sys.Date()),
+  target = "Late_delivery",
+  mode = "manual"
+)
+late_ship_project <- GetProject(project = project_object)
+```
+
+#### Explore features
+
+Let's first start to understand the features in the "All Features" feature list using the `ListFeatureInfo()` function and the `map_chr()` function from the {purrr} package.
+
+```{r}
+all_features_list <- ListFeatureInfo(late_ship_project)
+feature_names <- map_chr(all_features_list, "name")
+feature_types <- map_chr(all_features_list, "featureType")
+```
+
+Let's next create a tibble to show the read in feature types next to their names.
+
+```{r}
+tibble(feature_names, feature_types)
+```
+
+```{r echo=FALSE, results='show'}
+knitr::kable(tibble(feature_names, feature_types))
+```
+
+#### Initiate transformation
+
+We would like to transform some of the features to be of different types. Next, we will specify which features these are by name in a vector.
+
+```{r}
+features_to_transform <- c(
+  "Dosage Form", # Read in as Categorical
+  "Unit of Measure (Per Pack)", # Read in as Numeric
+  "Molecule/Test Type" # Read in as Text
+)
+```
+
+We now specify a vector of the types of features we'd like to transform `features_to_transform` into. Make sure to check out `VariableTransformTypes` to get the possible options here for transforming.
+
+```{r}
+new_types <- c("text", "categoricalInt", "categorical")
+```
+
+We now can call the `BatchFeaturesTypeTransform()` function to convert each of these three features to their `new_types`. (Note that can also work well for converting many different features over to a new type. For example, converting all "Text" features to have "Categorical" versions as well.) We'll now iterate over both of these vectors using the `map2()` function in the {purrr} package.
+
+```{r}
+updated_features_list <- map2(
+  features_to_transform,
+  new_types,
+  BatchFeaturesTypeTransform,
+  project = late_ship_project,
+  prefix = "Transformed_"
+)
+```
+
+Note the use of `prefix = "Transformed_"` above which adds "Transformed_" to the beginning of each of the names of the new features created.
+
+The steps above can also be done by using the more direct functions for transforming to each of the new types. The results are the same except now the new features will start with "Updated_" instead of "Transformed_".
+
+```{r}
+updated_dosage <- CreateDerivedFeatureAsText(
+  late_ship_project,
+  parentName = features_to_transform[1], # "Dosage Form"
+  name = paste0("Updated_", features_to_transform[1])
+)
+updated_measure <- CreateDerivedFeatureIntAsCategorical(
+  late_ship_project,
+  parentName = features_to_transform[2], # "Unit of Measure (Per Pack)"
+  name = paste0("Updated_", features_to_transform[2])
+)
+updated_molecule <- CreateDerivedFeatureAsCategorical(
+  late_ship_project,
+  parentName = features_to_transform[3], # "Molecule/Test Type"
+  name = paste0("Updated_", features_to_transform[3])
+)
+list(updated_dosage, updated_measure, updated_molecule)
+```
+
+#### Create new feature list
+
+Let's now create a new feature list that replaces the original features of `feature_names` in Informative Features with their revised counterparts with the `"Updated_` prefix.
+
+```{r}
+# Get all feature lists
+feature_lists_list <- ListFeaturelists(late_ship_project)
+feature_list_names <- map_chr(feature_lists_list, "name")
+feature_list_names
+
+# Focus on Informative Features
+# (The 2nd entry in feature_lists_list)
+informative_features <- feature_lists_list[[2]]$features
+
+# Replace the original feature names
+# with the new updated ones
+modified_inf_features <- informative_features
+modified_inf_features[modified_inf_features %in% features_to_transform] <-
+  paste0("Updated_", features_to_transform)
+modified_inf_features
+
+# Create the new feature list
+modified_feature_list <- CreateFeaturelist(
+  project = late_ship_project,
+  listName = "Modified Informative Features",
+  featureNames = modified_inf_features
+)
+# Save this new feature list ID
+modified_inf_features_list_id <- modified_feature_list$featurelistId
+```
+
+#### Run autopilot with this new feature list
+
+```{r}
+StartNewAutoPilot(
+  project = late_ship_project,
+  featurelistId = modified_inf_features_list_id
+)
+```
