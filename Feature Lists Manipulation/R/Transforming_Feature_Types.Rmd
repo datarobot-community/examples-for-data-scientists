@@ -1,9 +1,10 @@
 ---
-title: "Advanced Feature Selection"
+title: "Transforming Feature Types"
 output: html_document
 ---
 
 **Author**: Chester Ismay
+
 **Contributors**: Peter Simon
 
 **Label**: Modeling Options
