@@ -20,3 +20,8 @@ Function together with example on how to fill missing dates in sparse time serie
 
 Multiple functions to help preprocess time series datasets.
 
+**ts_ion_cannon.py**
+Use this python package and aim at your time series project with completed Autopilot to unleash the brute force of AutoTS.
+
+**ts_clone_project.py**
+Use this function to clone a TS DataRobot project. It will make a complete copy and start autopilot. Manipulate the `dtp_spec_for_clone` variable as you see fit if you need to make changes.
