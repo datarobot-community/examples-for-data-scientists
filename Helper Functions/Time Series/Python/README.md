@@ -25,3 +25,12 @@ Use this python package and aim at your time series project with completed Autop
 
 **ts_clone_project.py**
 Use this function to clone a TS DataRobot project. It will make a complete copy and start autopilot. Manipulate the `dtp_spec_for_clone` variable as you see fit if you need to make changes.
+
+**ts_metrics.py**
+Multiple functions for extracting common accuracy metrics for TS project.
+
+**ts_modeling.py**
+Functions to create one or multiple DataRobot TS projects.
+
+**ts_projects.py**
+Multiple functions to manipulate lists of DataRobot TS projects, find out the best models and rerun them on reduced feature lists.
