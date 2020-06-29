@@ -103,74 +103,6 @@ def _get_pacf_coefs(df, col, nlags, alpha, scale, scale_method):
         coefs = clf[1:]
         return coefs
 
-
-def _get_performance_cluster_results(df, ts_settings, n_clusters, max_clusters):
-    """
-    Helper function for add_cluster_labels()
-
-    Use series acccuracy from an XGBoost model to cluster series
-
-    Returns:
-    --------
-    distance matrix
-
-    """
-
-    date_col = ts_settings['date_col']
-    series_id = ts_settings['series_id']
-    target = ts_settings['target']
-
-    project_name = 'Temp'
-
-    settings = ts_settings.copy()
-    settings['mode'] = 'manual'
-    settings['number_of_backtests'] = 1
-
-    if settings['max_date'] is None:
-        settings['max_date'] = df[date_col].max() - dt.timedelta(days=90)
-    else:
-        settings['max_date'] = pd.to_datetime(settings['max_date']) - dt.timedelta(days=90)
-
-    temp = create_dr_project(df, project_name, settings)
-
-    blueprints = temp.get_blueprints()
-    bp = [
-        bp
-        for bp in blueprints
-        if 'eXtreme Gradient Boosted Trees' in bp.model_type
-        if 'Decay' not in bp.model_type
-        if 'Multiseries ID' not in ','.join(bp.processes)
-    ][0]
-    featurelist = [
-        fl for fl in temp.get_modeling_featurelists() if '(average baseline)' in fl.name
-    ][
-        0
-    ] 
-    duration = dr.DatetimePartitioning.get(temp.id).primary_training_duration
-
-    model_job = temp.train_datetime(
-        blueprint_id=bp.id, featurelist_id=featurelist.id, training_duration=duration
-    )
-    print(f'Training {bp.model_type} Model')
-    model_job.wait_for_completion(max_wait=10000)
-
-    temp.unlock_holdout()
-
-    df = get_preds_and_actuals(df, [temp], settings, n_models=1, data_subset='holdout')
-
-    df['residual'] = np.abs(df['prediction'] - df[target])
-    df = df[[series_id, date_col, 'residual', 'forecast_distance']].copy()
-    df = df.groupby([series_id, date_col]).agg({'residual': 'mean'}).reset_index()
-    df = df.pivot(index=date_col, columns=series_id, values='residual')
-    df = df.fillna(df.mean()).corr(method='pearson')
-
-    dist_df = df.apply(lambda x: x.fillna(x.mean()), axis=1)
-
-    temp.delete()
-
-    return dist_df
-
-
 def _get_optimal_n_clusters(df, n_series, max_clusters, plot=True):
     """
     Helper function for add_cluster_labels()
@@ -223,11 +155,11 @@ def add_cluster_labels(
     plot=True,
 ):
     """
-    Calculates series clusters and appends a column of cluster labels to the input df
+    Calculates series clusters and appends a column of cluster labels to the input df. This will only work on regularly spaced time series datasets.
 
     df: pandas df
     ts_settings: dictionary of parameters for time series project
-    method: type of clustering technique: must choose from either pacf, correlation, performance, or target
+    method: type of clustering technique: must choose from either pacf, correlation, or target
     nlags: int (Optional)
         Number of AR(n) lags. Only applies to PACF method
     scale: boolean (Optional)
@@ -290,9 +222,6 @@ def add_cluster_labels(
         dist_df = dist_df.apply(lambda x: x.fillna(x.mean()), axis=1)
         dist_df = dist_df.apply(lambda x: x.fillna(x.mean()), axis=0)
 
-    elif method == 'performance':
-        dist_df = _get_performance_cluster_results(df, ts_settings, n_clusters, max_clusters)
-
     elif method == 'target':
         if split_method is not None:
             if n_clusters:
@@ -307,7 +236,7 @@ def add_cluster_labels(
 
     else:
         raise ValueError(
-            f'{method} is not a supported value. Must be set to either pacf, correlation, performance, or target'
+            f'{method} is not a supported value. Must be set to either pacf, correlation, or target'
         )
 
     # Find optimal number of clulsters is n_clusters is not specified
