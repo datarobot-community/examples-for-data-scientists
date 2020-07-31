@@ -1,0 +1,135 @@
+---
+title: "Prediction Explanation Clustering with R"
+output: html_notebook
+---
+
+This notebook is intended to accompany the *Prediction Explanation Clustering with R* post on the DataRobot Community. The post, together with the code below, illustrates how to use the `datarobot.pe.clustering` R package, available at the [pe-clustering-R repository](https://github.com/datarobot-community/pe-clustering-R) on the DataRobot Community GitHub.
+
+# Installing the Package
+
+```{r}
+if (!require("devtools")) { install.packages("devtools") }
+if (!require("datarobot.pe.clustering")) { devtools::install_github("datarobot-community/pe-clustering-R", build_vignettes=TRUE) }
+```
+
+# Loading libraries
+
+```{r}
+library(datarobot.pe.clustering)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+```
+
+
+# Setting up the data
+
+```{r}
+library(mlbench)
+data(PimaIndiansDiabetes)
+head(PimaIndiansDiabetes)
+```
+
+
+# Obtaining a DataRobot model
+
+```{r}
+project <- StartProject(dataSource = PimaIndiansDiabetes,
+                        projectName = "PredictionExplanationClusteringVignette",
+                        target = "diabetes",
+                        mode = "quick",
+                        wait = TRUE)
+models <- ListModels(project$projectId)
+model <- models[[1]]
+```
+
+```{r}
+summary(model)['modelType']
+```
+
+
+# Running prediction explanations
+
+```{r}
+scoring_df <- PimaIndiansDiabetes %>% select(-diabetes)
+```
+
+```{r}
+results <- cluster_and_summarize_prediction_explanations(
+      model,
+      scoring_df,
+      num_feature_summarizations=10,
+      num_neighbors=50,
+      min_dist=10^-100,
+      min_points=25
+    )
+```
+
+```{r}
+str(results, max.level = 1)
+```
+
+
+# Introspection of results
+
+## Summary and Plot
+
+```{r}
+summary(results)
+```
+
+```{r}
+plot(results)
+```
+
+```{r}
+ggplot(results$plot_data, aes(x=dim1, y=dim2, color=clusterID)) +
+  geom_point()+
+  theme_bw()+
+  labs(title='Records by Prediction Explanation Cluster', x='Reduced Dimension 1', y='Reduced Dimension 2')
+```
+
+
+## Characterizing clusters by prediction risk and feature values
+
+```{r}
+scoring_df_with_clusters <- scoring_df
+scoring_df_with_clusters$cluster <- factor(results$cluster_ids)
+scoring_df_with_clusters$predicted_risk <- results$pe_frame$class1Probability
+```
+
+```{r}
+scoring_df_with_clusters %>%
+    ggplot(aes(x=cluster,y=predicted_risk, fill=cluster))+geom_violin()+
+    labs(title='Predicted Diabetes Risk by Cluster')+
+    theme_bw()
+```
+
+```{r}
+scoring_df_with_clusters %>%
+    gather(key='feature',value='value',-cluster)%>%
+    ggplot(aes(x=value, group=cluster, color=cluster, fill=cluster)) +
+    geom_density(alpha=0.2)+
+    facet_wrap(~feature, scales='free')+
+    theme_bw()
+```
+
+
+## Characterizing clusters by prediction explanation strength
+
+```{r}
+strength_matrix_with_clusters <- results$strength_matrix
+strength_matrix_with_clusters$cluster <- factor(results$cluster_ids)
+head(strength_matrix_with_clusters)
+```
+
+```{r}
+strength_matrix_with_clusters %>%
+  gather(feature, strength, -cluster)%>%
+  ggplot(aes(x=strength, group=cluster, color=cluster, fill=cluster)) +
+  geom_density(alpha=0.2)+
+  facet_wrap(~feature, scales='free')+
+  xlab('Strength of prediction explanation')+
+  theme_bw()
+```
+
