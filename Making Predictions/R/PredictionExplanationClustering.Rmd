@@ -3,7 +3,7 @@ title: "Prediction Explanation Clustering with R"
 output: html_notebook
 ---
 
-This notebook is intended to accompany the *Prediction Explanation Clustering with R* post on the DataRobot Community. The post, together with the code below, illustrates how to use the `datarobot.pe.clustering` R package, available at the [pe-clustering-R repository](https://github.com/datarobot-community/pe-clustering-R) on the DataRobot Community GitHub.
+This notebook is intended to accompany the [*Prediction Explanation Clustering with R* post](https://community.datarobot.com/t5/resources/prediction-explanation-clustering-with-r/ta-p/7862) on the DataRobot Community. The post, together with the code below, illustrates how to use the `datarobot.pe.clustering` R package, available at the [pe-clustering-R repository](https://github.com/datarobot-community/pe-clustering-R) on the DataRobot Community GitHub.
 
 # Installing the Package
 
