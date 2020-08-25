@@ -14,7 +14,7 @@ For each respective guide, follow the instructions in its own `.ipynb` or `.Rmd`
 
 - To learn to use DataRobot, visit [DataRobot University](https://university.datarobot.com/)
 - For General articles on DataRobot and news, visit [DataRobot Community](https://community.datarobot.com/)
-- End to end DataRobot API tutorials [Tutorials for Data Scientists](https://github.com/datarobot-community/tutorials-for-data-scientists)
+- End to end DataRobot API [Tutorials for Data Scientists](https://github.com/datarobot-community/tutorials-for-data-scientists)
 
 ## Development and Contributing
 
