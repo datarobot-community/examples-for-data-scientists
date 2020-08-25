@@ -4,7 +4,7 @@ Sample scripts and notebooks for the Data Science Learning path in the DataRobot
 
 This repository contains Python notebooks and R Markdown guides. 
 
-Start learning with the [API Training](https://github.com/datarobot-community/examples-for-data-scientists/tree/master/API_Training] module.
+Start learning with the [API Training](https://github.com/datarobot-community/examples-for-data-scientists/tree/master/API_Training) module.
 
 ## Usage
 
