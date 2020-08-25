@@ -1,13 +1,20 @@
 # API Samples for Data Scientists
 
 Sample scripts and notebooks for the Data Science Learning path in the DataRobot Community Learning Center.
-You can find the corresponding articles in the learning center - https://community.datarobot.com/t5/guided-ai-learning/data-science-learning-path/ta-p/1892
 
-This repository contains Python notebooks and R Markdown guides.
+This repository contains Python notebooks and R Markdown guides. 
+
+Start learning with the [API Training](https://github.com/datarobot-community/examples-for-data-scientists/tree/master/API_Training] module.
 
 ## Usage
 
 For each respective guide, follow the instructions in its own `.ipynb` or `.Rmd` file. 
+
+## Important Links
+
+- To learn to use DataRobot, visit [DataRobot University](https://university.datarobot.com/)
+- For General articles on DataRobot and news, visit [DataRobot Community](https://community.datarobot.com/)
+- End to end DataRobot API tutorials [Tutorials for Data Scientists](https://github.com/datarobot-community/tutorials-for-data-scientists)
 
 ## Development and Contributing
 
