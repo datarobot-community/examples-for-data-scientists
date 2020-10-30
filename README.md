@@ -8,7 +8,7 @@ Start learning with the [API Training](https://github.com/datarobot-community/tu
 
 For each respective guide, follow the instructions in its own `.ipynb` or `.Rmd` file. 
 
-**Please pay attention the different DataRobot API Endpoints**
+**Please pay attention to the different DataRobot API Endpoints**
 
 The API endpoint you specify for accessing DataRobot is dependent on the deployment environment, as follows:
 
