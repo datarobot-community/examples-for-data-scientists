@@ -8,14 +8,17 @@ Start learning with the [API Training](https://github.com/datarobot-community/tu
 
 For each respective guide, follow the instructions in its own `.ipynb` or `.Rmd` file. 
 
-Different DataRobot API Endpoints
+**Please pay attention the different DataRobot API Endpoints**
 
 The API endpoint you specify for accessing DataRobot is dependent on the deployment environment, as follows:
-AI Platform Trial—https://app2.datarobot.com/api/v2
-US Managed AI Cloud—https://app.datarobot.com/api/v2
-EU Managed AI Cloud—https://app.eu.datarobot.com/api/v2
-On-Premise—https://{datarobot.example.com}/api/v2 
+
+- AI Platform Trial—https://app2.datarobot.com/api/v2
+- US Managed AI Cloud—https://app.datarobot.com/api/v2
+- EU Managed AI Cloud—https://app.eu.datarobot.com/api/v2
+- On-Premise—https://{datarobot.example.com}/api/v2 
        (replacing {datarobot.example.com} with your specific deployment endpoint
+       
+The DataRobot API Endpoint is used to connect your IDE to DataRobot.
 
 ## Important Links
 
