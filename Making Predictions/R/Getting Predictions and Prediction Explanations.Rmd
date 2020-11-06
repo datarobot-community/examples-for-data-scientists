@@ -82,3 +82,33 @@ When uploading a dataset for Time Series projects scoring, you need to include t
 | 13/01/2019 |       | DDD                      |
 
 DataRobot will detect your forecast point as 10/01/2019 and then it will calculate lag features and make predictions for the missing dates.
+
+#### Getting Predictions from a DataRobot Deployment
+If you have used MLOps to deploy a model (DataRobot or Custom), you will have access to an API which you can call using an API Client. Below is a R script of an API Client. You can create your own API Client in the language of your choice!
+
+```{r eval=FALSE}
+
+library(readr)
+library("httr")
+library(jsonlite)
+API_URL       <- "Find this in Deployment -> Overview -> Summary -> Endpoint"
+DATAROBOT_KEY <- 'Find this in Deployment -> Predictions -> Prediction API -> Single mode -> on top of the code sample'
+API_TOKEN     <- "Find this in Deployment -> Predictions -> Prediction API -> Single mode -> on top of the code sample"
+USERNAME      <- "your username for DR"
+DEPLOYMENT_ID <- "Find this in Deployment -> Predictions -> Prediction API -> Single mode -> on top of the code sample"
+datarobot_predict <- function(input_file) {
+  predictions <- read_csv(input_file)
+  URL <- paste0(API_URL, "/predApi/v1.0/deployments/", DEPLOYMENT_ID, "/predictions")
+  response <- POST(URL, body = rjson::toJSON(unname(split(predictions, 1:nrow(predictions)))),
+                   add_headers("datarobot-key" = DATAROBOT_KEY),httr::content_type_json(),
+                   authenticate(USERNAME, API_TOKEN, type = "basic")
+    )
+  data <- fromJSON(content(response, "text", encoding = "UTF-8"), simplifyVector=FALSE)$data
+} 
+main <- function(filename) {
+  cat(paste0("[INFO] Predicting on File:, ", filename, "...\n"))
+  preds <- datarobot_predict(filename)
+}
+args = commandArgs(trailingOnly=TRUE)
+main(args[1])
+```
