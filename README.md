@@ -28,10 +28,6 @@ The DataRobot API Endpoint is used to connect your IDE to DataRobot.
 
 ## Contents
 
-### AI Catalog
-
-- *AI Catalog API Demo:* how to create and share datasets in AI Catalog and use them to create projects and run predictions. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/AI%20Catalog/AI_Catalog_API.ipynb)
-
 ### Advanced Tuning
 
 - *Advanced Tuning:* how to do advanced tuning. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Advanced%20Tuning%20and%20Partitioning/Python/Advanced%20Tuning.ipynb) [R](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Advanced%20Tuning%20and%20Partitioning/R/Advanced_Tuning.Rmd)
@@ -101,6 +97,14 @@ The DataRobot API Endpoint is used to connect your IDE to DataRobot.
 - *Sharing Projects:* how to share projects with colleagues. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Model%20Management/Python/Sharing%20Projects.ipynb)
 
 - *Uploading Actuals to a DataRobot Deployment:* how to upload actuals into the DataRobot platform in order to calculate accuracy metrics [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Model%20Management/Python/Uploading%20Actuals%20to%20a%20DataRobot%20Deployment.ipynb)
+
+### AI Catalog
+
+- *AI Catalog API Demo:* how to create and share datasets in AI Catalog and use them to create projects and run predictions. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/AI%20Catalog/AI_Catalog_API.ipynb)
+
+### Paxata
+- *Paxata Functions: A collection of functions to interact with DataRobot Paxata. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Paxata/paxata_functions.py)
+
 
 ## Development and Contributing
 
