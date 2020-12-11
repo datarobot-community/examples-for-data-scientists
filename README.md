@@ -40,6 +40,8 @@ The DataRobot API Endpoint is used to connect your IDE to DataRobot.
 
 ### Feature Lists Manipulation
 
+- *Feature Selection using Feature Importance Rank Ensembling:* This notebook shows the benefits of advanced feature selection that uses median rank agggregation of feature impacts across several models created during a run of DataRobot autopilot. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Feature%20Lists%20Manipulation/Python/FeatureSelection_using_Feature_Importance_Rank_Ensembling.ipynb)
+
 - *Advanced Feature Selection:* how to do advanced feature selection using all of the models created during a run of DataRobot autopilot. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Feature%20Lists%20Manipulation/Python/Advanced%20Feature%20Selection.ipynb)  [R](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Feature%20Lists%20Manipulation/R/Advanced_Feature_Selection.Rmd)
 
 - *Feature Lists Manipulation:* how to create and manipulate custom feature lists and use it for training.  [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Feature%20Lists%20Manipulation/Python/Feature%20Lists%20Manipulation.ipynb)  [R](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Feature%20Lists%20Manipulation/R/Feature_Lists_Manipulation.Rmd)
