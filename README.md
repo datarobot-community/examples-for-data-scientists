@@ -34,6 +34,7 @@ The DataRobot API Endpoint is used to connect your IDE to DataRobot.
 
 - *Datetime Partitioning:* how to do datetime partitioning. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Advanced%20Tuning%20and%20Partitioning/Python/Datetime%20Partitioning.ipynb) [R](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Advanced%20Tuning%20and%20Partitioning/R/Datetime_Partitioning.Rmd)
 
+- *AdvancedOptions object*: how to use AdvancedOptions object. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Advanced%20Tuning%20and%20Partitioning/Python/AdvancedOptions%20object.ipynb)
 ### Compliance Documentation
 
 - *Getting Compliance Documentation:* how to get Compliance Documentation documents.  [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Compliance%20Docs/Python/Getting%20Compliance%20Documentation.ipynb)  [R](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Compliance%20Docs/R/Getting_Compliance_Documentation.Rmd)
