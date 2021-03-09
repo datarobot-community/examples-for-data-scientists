@@ -106,7 +106,7 @@ The DataRobot API Endpoint is used to connect your IDE to DataRobot.
 - *AI Catalog API Demo:* how to create and share datasets in AI Catalog and use them to create projects and run predictions. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/AI%20Catalog/AI_Catalog_API.ipynb)
 
 ### DataRobot Data Prep
-- *DataRobot Data Prep:* A collection of functions to interact with DataRobot Data Prep. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Paxata/dataprep_functions.py)
+- *DataRobot Data Prep:* A collection of functions to interact with DataRobot Data Prep. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/DataPrep/dataprep_functions.py)
 
 
 ## Development and Contributing
