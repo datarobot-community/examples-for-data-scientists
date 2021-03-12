@@ -108,6 +108,9 @@ The DataRobot API Endpoint is used to connect your IDE to DataRobot.
 ### DataRobot Data Prep
 - *DataRobot Data Prep:* A collection of functions to interact with DataRobot Data Prep. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/DataPrep/dataprep_functions.py)
 
+## Rating Tables
+- * Rating Tables*: A script that allows you to transform rating tables coming from Generalized Additive 2 Models to Rating Tables. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Rating%20Tables/Rating_Table_to_Scorecard.ipynb)
+
 
 ## Development and Contributing
 
