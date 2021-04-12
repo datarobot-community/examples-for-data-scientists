@@ -1,0 +1,30 @@
+custom_id,loan_amnt,funded_amnt,term,int_rate,installment,grade,sub_grade,emp_title,emp_length,home_ownership,annual_inc,verification_status,pymnt_plan,url,desc,purpose,title,zip_code,addr_state,dti,delinq_2yrs,earliest_cr_line,inq_last_6mths,mths_since_last_delinq,mths_since_last_record,open_acc,pub_rec,revol_bal,revol_util,total_acc,initial_list_status,mths_since_last_major_derog,policy_code,is_bad,Target (1),Target (1) Prediction Value
+7,14000,8725, 60 months,7.51%,174.88,A,A4,Peninsula Counseling Center,10+ years,MORTGAGE,126000,not verified,n,https://www.lendingclub.com/browse/loanDetail.action?loan_id=517686,"  Borrower added on 05/18/10 > mick credit card consolidation loan - 100% payoff of credit card debt - amex, sears, macys and bank of america<br/>",credit_card,mick credit card loan,103xx,NY,14.28,0,11/1/79,0,NA,NA,18,0,5466,11.1,29,f,NA,1,0,0,0.998740448
+8,3975,3975, 60 months,17.58%,100.04,D,D4,Health Plan of Nevada,6 years,MORTGAGE,42000,VERIFIED - income source,n,https://www.lendingclub.com/browse/loanDetail.action?loan_id=1047143,  Borrower added on 11/29/11 > Loan is for debt consolidation and will be paid timely.  Employed in the healthcare industry for 6 years since moving to NV 7 years ago and have always had stable job positions.  Thank you very much for your assistance.<br>,debt_consolidation,CC Loan,891xx,NV,10.29,0,4/1/06,0,NA,NA,9,0,10354,95.9,10,f,NA,1,0,0,0.9108155
+9,25000,25000, 36 months,15.58%,873.76,D,D3,John Deere,2 years,MORTGAGE,50000,VERIFIED - income,n,https://www.lendingclub.com/browse/loanDetail.action?loan_id=583218,,debt_consolidation,Consolidation,612xx,IL,15.36,0,2/1/01,2,NA,NA,11,0,19662,59.2,27,f,NA,1,0,0,0.722703374
+10,10000,10000, 36 months,8.00%,313.37,A,A3,,< 1 year,RENT,40000,not verified,n,https://www.lendingclub.com/browse/loanDetail.action?loan_id=359428,This loan would be for a 2006 PT Cruiser with only 300 miles on it. There is still a full warranty till Dec. 2009 in effect. ,car,FICO score 762 want's to buy a new car,926xx,CA,6.48,0,5/1/95,1,NA,NA,11,0,19998,18.3,23,f,NA,1,0,0,0.953508629
+11,10000,10000, 36 months,6.62%,307.04,A,A2,,3 years,RENT,74000,VERIFIED - income source,n,https://www.lendingclub.com/browse/loanDetail.action?loan_id=883583,,credit_card,Credit Card Consolidation,921xx,CA,17.11,0,12/1/90,0,NA,NA,10,0,15046,39.9,18,f,NA,1,0,0,0.988155073
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
