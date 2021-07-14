@@ -6,12 +6,19 @@ output:
 ---
 
 # Background
-In this notebook, we will build DataRobot modeling projects with Automated Feature Discovery (AFD) through the Python API. We gathered and prepared the soccer data in the notebook (here)[]. 
+In this notebook, we will build DataRobot modeling projects with Automated Feature Discovery (AFD) through the Python API. We gathered and prepared the soccer data in the notebook (here)[https://github.com/datarobot-community/examples-for-data-scientists/blob/afd_soccer_example_wip/Feature%20Discovery/Python/Soccer%20predictions/Gather_and_prepare_data_for_AFD_soccer_example.Rmd]. 
 
 ## Introduction
-Automated Feature Discovery (AFD) is a tool offered in DataRobot's Automated Machine Learning (AutoML) portion of the platform. Put simply, AFD helps to derive hundreds or thousands of features (predictor variables) based on historical information. When it comes to predicting the performance of individuals and teams--whether they be soccer players or data scientists--understanding their past performance is often the best predictor of future success. How many goals did they average over the last month? Year? Career? These are the types of features that will lead to good predictions of the number of goals they'll score or points the team will earn in coming matches. 
+Automated Feature Discovery (AFD) is a tool offered in DataRobot's Automated Machine Learning (AutoML) portion of the platform. Put simply, AFD helps to derive
+hundreds or thousands of features (predictor variables) based on historical information. When it comes to predicting the performance of individuals and teams--
+whether they be soccer players or data scientists--understanding their past performance is often the best predictor of future success. How many goals did they
+average over the last month? Year? Career? These are the types of features that will lead to good predictions of the number of goals they'll score or points the
+team will earn in coming matches. 
 
-In this example, we'll predict the number of goals scored in future games by both the home and away team. This will require two models, home and away, and we will use a simple assumption that goal scoring follows a Poisson distribution. The advantage to this approach is that we can predict and simulate both the mean goal totals and the win/loss/draw outcome of the match using the fact that Poisson variance is equal to a Poisson mean. When simulating the remaining MLS regular season schedule, we need the goal scoring totals to help break ties in the standings for playoff seeding. 
+In this example, we'll predict the number of goals scored in future games by both the home and away team. This will require two models, home and away, and we will
+use a simple assumption that goal scoring follows a Poisson distribution. The advantage to this approach is that we can predict and simulate both the mean goal
+totals and the win/loss/draw outcome of the match using the fact that Poisson variance is equal to a Poisson mean. When simulating the remaining MLS regular season
+schedule, we need the goal scoring totals to help break ties in the standings for playoff seeding. 
 
 We'll use publicly available data from (American Soccer Analysis)[https://app.americansocceranalysis.com] and DataRobot's AutoML with AFD to train the models.
 
@@ -30,13 +37,16 @@ dr.Client(token = "YOUR_API_TOKEN",
           endpoint = "YOUR_URL_ENDPOINT")
 ```
 ## Load primary dataset
-The primary dataset includes the home and away teams, and the number of goals they scored in each historical match. Goals scored will be our "target" variable, so that we can predict goals scored in the future. A key feature of this dataset is the date of the match, so that DataRobot's Automated Feature Discovery knows to aggregate historical "look-back" features up to, but not including, that date. 
+The primary dataset includes the home and away teams, and the number of goals they scored in each historical match. Goals scored will be our "target" variable, so
+that we can predict goals scored in the future. A key feature of this dataset is the date of the match, so that DataRobot's Automated Feature Discovery knows to
+aggregate historical "look-back" features up to, but not including, that date. 
 ```{python load_datasets}
 primary_table = pd.read_csv("Data/team_results_primary.csv")
 ```
 
 ## Register secondary datasets
-We load the same dataset four times because we are going to instruct AFD join it four times. For both teams in any match, we want to get each team's offensive historical statistics as well as each team's defensive historical statistics. 
+We load the same dataset four times because we are going to instruct AFD join it four times. For both teams in any match, we want to get each team's offensive
+historical statistics as well as each team's defensive historical statistics. 
 ```{python register_secondary_datasets}
 team_history_home_for = dr.Dataset.create_from_file("Data/team_gplus_xg_bygame_home.csv")
 team_history_home_against = dr.Dataset.create_from_file("Data/team_gplus_xg_bygame_home.csv")
@@ -221,7 +231,8 @@ def run_dr(months_ahead, home_indicator):
     return f"The project with {months_ahead} months ahead and home indicator {home_indicator} has already been created."
 ```
 ## Kick off projects in parallel
-Using the dask module, we queue and delay the function we wrote above to start project for combinations of months ahead and home vs. away. When each project has been queued, we run them all with the compute() function.
+Using the dask module, we queue and delay the function we wrote above to start project for combinations of months ahead and home vs. away. When each project has
+been queued, we run them all with the compute() function.
 ```{python start_projects_in_parallel}
 # queue projects
 delayed_dr_projects = []
