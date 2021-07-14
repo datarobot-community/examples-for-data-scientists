@@ -10,7 +10,7 @@ output:
 ---
 
 # Background
-In this notebook, we will gather and prepare the soccer data for a DataRobot project. These data have already been saved in the /Data directory of this repo as of July 2021, and you can skip to the model development notebook (here)[].
+In this notebook, we will gather and prepare the soccer data for a DataRobot project. These data have already been saved in the /Data directory of this repo as of July 2021, and you can skip to the model development notebook (here)[https://github.com/datarobot-community/examples-for-data-scientists/blob/afd_soccer_example_wip/Feature%20Discovery/Python/Soccer%20predictions/Build_soccer_models_thru_API.Rmd].
 
 ## Introduction
 Automated Feature Discovery (AFD) is a tool offered in DataRobot's Automated Machine Learning (AutoML) portion of the platform. Put simply, AFD helps to derive hundreds or thousands of features (predictor variables) based on historical information in secondary datasets. When it comes to predicting the performance of individuals and teams--whether they be soccer players or data scientists or whatever--understanding their past performance is often the best predictor of future success. How many goals did they average over the last month? Year? Career? These are the types of features that will lead to good predictions of the number of goals they'll score or points the team will earn in coming matches. 
