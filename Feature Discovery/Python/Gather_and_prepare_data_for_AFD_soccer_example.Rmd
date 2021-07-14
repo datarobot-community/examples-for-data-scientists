@@ -1,0 +1,305 @@
+---
+title: Using public Major League Soccer (MLS) data and Feature Discovery to predict
+  soccer outcomes
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  html_notebook:
+    toc: yes
+---
+
+# Background
+In this notebook, we will gather and prepare the soccer data for a DataRobot project. These data have already been saved in the /Data directory of this repo as of July 2021, and you can skip to the model development notebook (here)[].
+
+## Introduction
+Automated Feature Discovery (AFD) is a tool offered in DataRobot's Automated Machine Learning (AutoML) portion of the platform. Put simply, AFD helps to derive hundreds or thousands of features (predictor variables) based on historical information in secondary datasets. When it comes to predicting the performance of individuals and teams--whether they be soccer players or data scientists or whatever--understanding their past performance is often the best predictor of future success. How many goals did they average over the last month? Year? Career? These are the types of features that will lead to good predictions of the number of goals they'll score or points the team will earn in coming matches. 
+
+In this example, we'll predict the number of goals scored in future games by both the home and away team. This will require two models, home and away, and we will use a simple assumption that goal scoring follows a Poisson distribution. The advantage to this approach is that, if we wanted to take this further, we could predict and simulate both the goal totals and the win/loss/draw outcomes of future matches. If simulating the remaining MLS regular season schedule, we would need the goal scoring totals to help break ties in the standings for playoff seeding. 
+
+We'll use publicly available data from (American Soccer Analysis)[https://app.americansocceranalysis.com] and DataRobot's AutoML with AFD to train the models.
+
+## Import libraries
+```{r load_libraries}
+library(jsonlite)
+library(httr)
+library(glue)
+library(tidyverse)
+library(doParallel)
+```
+
+# Query raw data
+In this section, we show how to query American Soccer Analysis's API. However, examples of the datasets have been saved to the /Data directory in this repository, and you can skip ahead to AutoML modeling using that data. 
+
+## American Soccer Analysis API request function
+This function will allow us to easily query American Soccer Analysis's API to get player- and team-level data for each game going back to 2013. 
+```{r define_api_request_function}
+asa_api_request <- function(path = "https://app.americansocceranalysis.com/api/v1", 
+                            league = "mls", # nwsl, uslc, usl1, nasl
+                            endpoint = "teams/xgoals", # teams, players, goalkeepers / xgoals, goals_added
+                            parameters = NULL) {
+  parameters_array <- c()
+  
+  if (length(parameters) > 0) {
+    for (i in 1:length(parameters)) {
+      tmp_name <- names(parameters[i])
+      tmp_value <- parameters[[tmp_name]]
+      
+      if (all(!is.na(tmp_value)) & all(!is.null(tmp_value))) {
+        if (length(tmp_value) > 1) {
+          tmp_value <- gsub("\\s+", "%20", paste0(tmp_value, collapse = ","))
+        } else {
+          tmp_value <- gsub("\\s+", "%20", tmp_value)
+        }
+        
+        parameters_array <- c(parameters_array, paste0(tmp_name, "=", tmp_value))
+      }
+    }
+  }
+  
+  parameters_array <- ifelse(length(parameters_array) > 0,
+                             paste0("?", paste0(parameters_array, collapse = "&")),
+                             "")
+  
+  
+  return(fromJSON(content(GET(glue("{path}/{league}/{endpoint}{parameters_array}")),
+                          as = "text", encoding = "UTF-8")))
+}
+```
+
+## Query player data
+Here we use a loop to query the API for each historical day, to build a dataset that includes information for each MLS player from each game since 2013. We are going to focus on players' Goals Added (g+) metrics, which is an approximation of the value they produced in the game. You can read more about g+ (here)[https://www.americansocceranalysis.com/what-are-goals-added], but it suffices to know that this metric is relatively predictive of future outcomes. 
+
+Note that because American Soccer Analysis does not currently provide a date filter for team-level g+ data, we will later aggregate this individual data to the team level. 
+```{r get_player_gplus_data}
+# This will take a few minutes
+cl <- makeCluster(8)
+registerDoParallel(cl)
+gplus_players <- foreach(Date = seq.Date(as.Date("2013-03-01"), as.Date(Sys.Date()), by = "days"),
+                         .inorder = FALSE,
+                         .combine = bind_rows,
+                         .packages = c("httr", "jsonlite", "glue", "tidyr", "dplyr"))%dopar%{
+                           
+                           parameters_input <- list(
+                             above_replacement = NULL,
+                             general_position = NULL,
+                             stage_name = "Regular Season",
+                             split_by_seasons = TRUE,
+                             split_by_teams = NULL,
+                             start_date = Date,
+                             end_date = Date,
+                             season_name = NULL,
+                             team_id = NULL,
+                             minimum_minutes = NULL,
+                             gamestate_trunc = NULL,
+                             zone = NULL) 
+                           
+                           df <- asa_api_request(path = "https://app.americansocceranalysis.com/api/v1", 
+                                                 league = "mls",
+                                                 endpoint = "players/goals-added",
+                                                 parameters = parameters_input)
+                           
+                           if(is.data.frame(df)){
+                             return(unnest(df, cols = c(data)) %>% mutate(Date = Date) %>% select(-season_name))
+                           } else{
+                             return(data.frame())
+                           }
+                         }
+
+stopCluster(cl)
+rm(cl)
+gc()
+
+saveRDS(gplus_players, 
+        "Data/player_gplus_bygame.Rds")
+write.csv(gplus_players,
+          "Data/player_gplus_bygame.csv",
+          row.names = F)
+```
+
+## Query goalkeeper data
+```{r get_keeper_gplus_data}
+# This will take a few minutes
+cl <- makeCluster(8)
+registerDoParallel(cl)
+gplus_keepers <- foreach(Date = seq.Date(as.Date("2013-03-01"), as.Date(Sys.Date()), by = "days"),
+                         .inorder = FALSE,
+                         .combine = bind_rows,
+                         .packages = c("httr", "jsonlite", "glue", "tidyr", "dplyr"))%dopar%{
+                           
+                           parameters_input <- list(
+                             above_replacement = NULL,
+                             general_position = NULL,
+                             stage_name = "Regular Season",
+                             split_by_seasons = TRUE,
+                             split_by_teams = NULL,
+                             start_date = Date,
+                             end_date = Date,
+                             season_name = NULL,
+                             team_id = NULL,
+                             minimum_minutes = NULL,
+                             gamestate_trunc = NULL,
+                             zone = NULL)
+                           
+                           df <- asa_api_request(path = "https://app.americansocceranalysis.com/api/v1",
+                                                 league = "mls",
+                                                 endpoint = "goalkeepers/goals-added",
+                                                 parameters = parameters_input)
+                           
+                           if(is.data.frame(df)){
+                             return(unnest(df, cols = c(data)) %>% mutate(Date = Date) %>% select(-season_name))
+                           } else{
+                             return(data.frame())
+                           }
+                         }
+
+stopCluster(cl)
+rm(cl)
+gc()
+
+saveRDS(gplus_keepers,
+        "Data/keeper_gplus_bygame.Rds")
+write.csv(gplus_keepers,
+          "Data/keeper_gplus_bygame.csv",
+          row.names = F)
+```
+
+## Query team data
+In addition to the g+ values, we will also get team-level expected goal values (xG). Expected goals specifically attempt to measure the value of _shots_ that the team took. It's like a measurement that combines the quality and quantity of shots in one number, estimating the expected number of goals a typical team would have scored given the same shots. We will let DataRobot and AFD automatically figure out which of these features is most important for making future predictions.
+```{r get_team_xg_data}
+xg_teams <- asa_api_request(path = "https://app.americansocceranalysis.com/api/v1", 
+                            league = "mls",
+                            endpoint = "games/xgoals",
+                            parameters = list(stage_name = "Regular Season"))
+
+xg_teams <- xg_teams %>%
+  mutate(Date = as.Date(date_time_utc)) %>%
+  select(game_id, Date, home_team_id, away_team_id, home_team_xgoals, away_team_xgoals)
+
+saveRDS(xg_teams,
+        "Data/team_xg_bygame.Rds")
+write.csv(xg_teams,
+          "Data/team_xg_bygame.csv",
+          row.names = F)
+```
+
+## Query actual goals-scored outcomes from each game
+```{r get_primary_team_results}
+team_results_primary <- asa_api_request(path = "https://app.americansocceranalysis.com/api/v1", 
+                                        league = "mls",
+                                        endpoint = "games",
+                                        parameters = list(
+                                          stage_name = "Regular Season"))
+
+team_results_primary <- team_results_primary %>%
+  mutate(Date = as.Date(date_time_utc)) %>%
+  select(game_id, Date, home_team_id, away_team_id, home_score, away_score)
+```
+
+# Clean model data
+## Query player and team information
+These datasets contain actual player and team names. While not necessary for building models, this will make the output more interpretable, as we'll recognize the teams and players (rather than their IDs).
+```{r get_team_player_info}
+team_info <- asa_api_request(path = "https://app.americansocceranalysis.com/api/v1", 
+                           league = "mls",
+                           endpoint = "teams")
+
+player_info <- asa_api_request(path = "https://app.americansocceranalysis.com/api/v1", 
+                         league = "mls",
+                         endpoint = "players")
+```
+
+## Aggregate player/keeper g+ values to team level
+```{r aggregate_player_keeper_gplus}
+gplus_individual <- gplus_players %>%
+  bind_rows(gplus_keepers) %>% 
+  left_join(player_info %>% select(player_id, player_name),
+            by = "player_id") %>%
+  left_join(team_info %>% select(team_id, team_abbr = team_abbreviation),
+            by = "team_id")
+
+saveRDS(gplus_individual,
+        "Data/individuals_gplus_bygame.Rds")
+write.csv(gplus_individual,
+          "Data/individuals_gplus_bygame.csv",
+          row.names = F)
+```
+
+## Combine team g+ and team xG
+```{r combine_team_data}
+team_history <- gplus_individual %>%
+  group_by(field = ifelse(general_position == "GK",
+                          "GK",
+                          "Field"),
+           action_type,
+           Date,
+           team_id,
+           team_abbr) %>%
+  summarize(goals_added_above_avg = sum(goals_added_above_avg)) %>%
+  pivot_wider(names_from = c(action_type, field),
+              values_from = goals_added_above_avg,
+              values_fill = 0) %>%
+  ungroup() %>%
+  mutate(offensive_gplus = Dribbling_Field + Passing_Field + Receiving_Field + Shooting_Field + Passing_GK) %>%
+  left_join(xg_teams %>% select(team_id = home_team_id, Date, home_team_xgoals),
+            by = c("Date", "team_id")) %>%
+  left_join(xg_teams %>% select(team_id = away_team_id, Date, away_team_xgoals),
+            by = c("Date", "team_id")) %>%
+  mutate(team_xgoals = ifelse(is.na(home_team_xgoals),
+                              away_team_xgoals,
+                              home_team_xgoals)) %>%
+  select(-c(home_team_xgoals, away_team_xgoals))
+```
+
+## Add team information to primary dataset
+```{r join_teams_onto_primary}
+team_results_primary <- team_results_primary %>%
+  left_join(team_info %>% select(team_id, home_team_abbr = team_abbreviation),
+            by = c("home_team_id" = "team_id")) %>%
+  left_join(team_info %>% select(team_id, away_team_abbr = team_abbreviation),
+            by = c("away_team_id" = "team_id")) %>%
+  select(-game_id)
+  
+saveRDS(team_results_primary,
+        "Data/team_results_primary.Rds")
+write.csv(team_results_primary,
+          "Data/team_results_primary.csv",
+          row.names = F)
+```
+
+## Derive the team history opponents in each game
+At this point, our team history data file tells what teams did themselves, but not who the opposition was. Using the historical schedule of results, our primary dataset, we can determine each team's opponent on each game date and look at the data from the perspective of either team. This will allow us to derive defensive historical data for each team.
+```{r derive_defensive_team_history}
+# get opponents
+team_history <- team_history %>%
+  left_join(team_results_primary %>% 
+              select(team_id = home_team_id,
+                     Date,
+                     opposition_team_id1 = away_team_id, 
+                     opposition_team_abbr1 = away_team_abbr),
+            by = c("Date", "team_id")) %>%
+  left_join(team_results_primary %>% 
+              select(team_id = away_team_id,
+                     Date,
+                     opposition_team_id2 = home_team_id, 
+                     opposition_team_abbr2 = home_team_abbr),
+            by = c("Date", "team_id")) %>%
+  mutate(opposition_team_id = ifelse(is.na(opposition_team_id1), opposition_team_id2, opposition_team_id1),
+         opposition_team_abbr = ifelse(is.na(opposition_team_abbr1), opposition_team_abbr2, opposition_team_abbr1)) %>%
+  select(-c(opposition_team_id1, opposition_team_id2, opposition_team_abbr1, opposition_team_abbr2))
+
+# Write two versions out to better identify where features 
+## came from in DataRobot's Automated Feature Discovery
+saveRDS(team_history,
+        "Data/team_gplus_xg_bygame_home.Rds")
+write.csv(team_history,
+          "Data/team_gplus_xg_bygame_home.csv",
+          row.names = F)
+
+saveRDS(team_history,
+        "Data/team_gplus_xg_bygame_away.Rds")
+write.csv(team_history,
+          "Data/team_gplus_xg_bygame_away.csv",
+          row.names = F)
+```
+
