@@ -6,7 +6,7 @@ output:
 ---
 
 # Background
-In this notebook, we will build DataRobot modeling projects with Automated Feature Discovery (AFD) through the Python API. We gathered and prepared the soccer data in the notebook (here)[https://github.com/datarobot-community/examples-for-data-scientists/blob/afd_soccer_example_wip/Feature%20Discovery/Python/Soccer%20predictions/Gather_and_prepare_data_for_AFD_soccer_example.Rmd]. 
+In this notebook, we gather and prepare the soccer data for DataRobot's AutoML fool. We queue the model building projects in the notebook (here)[https://github.com/datarobot-community/examples-for-data-scientists/blob/afd_soccer_example_wip/Feature%20Discovery/Python/Soccer%20predictions/Gather_and_prepare_data_for_AFD_soccer_example.Rmd]. 
 
 ## Introduction
 Automated Feature Discovery (AFD) is a tool offered in DataRobot's Automated Machine Learning (AutoML) portion of the platform. Put simply, AFD helps to derive
