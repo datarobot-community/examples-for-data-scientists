@@ -1,0 +1,245 @@
+---
+title: "Create DataRobot projects with Automated Feature Discovery (AFD) through API"
+output: 
+  html_notebook:
+    toc: True
+---
+
+# Background
+In this notebook, we will build DataRobot modeling projects with Automated Feature Discovery (AFD) through the Python API. We gathered and prepared the soccer data in the notebook (here)[]. 
+
+## Introduction
+Automated Feature Discovery (AFD) is a tool offered in DataRobot's Automated Machine Learning (AutoML) portion of the platform. Put simply, AFD helps to derive hundreds or thousands of features (predictor variables) based on historical information. When it comes to predicting the performance of individuals and teams--whether they be soccer players or data scientists--understanding their past performance is often the best predictor of future success. How many goals did they average over the last month? Year? Career? These are the types of features that will lead to good predictions of the number of goals they'll score or points the team will earn in coming matches. 
+
+In this example, we'll predict the number of goals scored in future games by both the home and away team. This will require two models, home and away, and we will use a simple assumption that goal scoring follows a Poisson distribution. The advantage to this approach is that we can predict and simulate both the mean goal totals and the win/loss/draw outcome of the match using the fact that Poisson variance is equal to a Poisson mean. When simulating the remaining MLS regular season schedule, we need the goal scoring totals to help break ties in the standings for playoff seeding. 
+
+We'll use publicly available data from (American Soccer Analysis)[https://app.americansocceranalysis.com] and DataRobot's AutoML with AFD to train the models.
+
+## Import libraries
+```{python load_libraries}
+import datarobot as dr
+import pandas as pd
+from datetime import datetime
+from dask import delayed, compute
+```
+
+# Set up project(s)
+## Connect to DataRobot
+```{python connect_to_DR}
+dr.Client(token = "YOUR_API_TOKEN",
+          endpoint = "YOUR_URL_ENDPOINT")
+```
+## Load primary dataset
+The primary dataset includes the home and away teams, and the number of goals they scored in each historical match. Goals scored will be our "target" variable, so that we can predict goals scored in the future. A key feature of this dataset is the date of the match, so that DataRobot's Automated Feature Discovery knows to aggregate historical "look-back" features up to, but not including, that date. 
+```{python load_datasets}
+primary_table = pd.read_csv("Data/team_results_primary.csv")
+```
+
+## Register secondary datasets
+We load the same dataset four times because we are going to instruct AFD join it four times. For both teams in any match, we want to get each team's offensive historical statistics as well as each team's defensive historical statistics. 
+```{python register_secondary_datasets}
+team_history_home_for = dr.Dataset.create_from_file("Data/team_gplus_xg_bygame_home.csv")
+team_history_home_against = dr.Dataset.create_from_file("Data/team_gplus_xg_bygame_home.csv")
+team_history_away_for = dr.Dataset.create_from_file("Data/team_gplus_xg_bygame_away.csv")
+team_history_away_against = dr.Dataset.create_from_file("Data/team_gplus_xg_bygame_away.csv")
+```
+
+## Create feature lists for secondary datasets
+```{python create_featurelists_secondary_datasets}
+team_history_home_for_featurelist = team_history_home_for.create_featurelist(
+  "Secondary model features", 
+  ["Dribbling_Field", "Passing_Field", "Receiving_Field", "Shooting_Field", "Fouling_Field", "offensive_gplus", "team_xgoals", "Date"])
+
+team_history_home_against_featurelist = team_history_home_against.create_featurelist(
+  "Secondary model features", 
+  ["Dribbling_Field", "Passing_Field", "Receiving_Field", "Shooting_Field", "Fouling_Field", "offensive_gplus", "team_xgoals", "Date"])
+  
+team_history_away_for_featurelist = team_history_away_for.create_featurelist(
+  "Secondary model features", 
+  ["Dribbling_Field", "Passing_Field", "Receiving_Field", "Shooting_Field", "Fouling_Field", "offensive_gplus", "team_xgoals", "Date"])  
+  
+team_history_away_against_featurelist = team_history_away_against.create_featurelist(
+  "Secondary model features", 
+  ["Dribbling_Field", "Passing_Field", "Receiving_Field", "Shooting_Field", "Fouling_Field", "offensive_gplus", "team_xgoals", "Date"])
+```
+
+## Prep the function to create projects
+```{python project_setup_function}
+def run_dr(months_ahead, home_indicator):
+  
+  # confirm that the project hasn't yet been made
+  if f"MLS_game_projections_months_ahead_{months_ahead}_home{home_indicator}" not in [proj.project_name for proj in dr.Project.list()]:
+    
+    # set up feature discovery definitions for predicting home score
+    if home_indicator == 1:
+      dataset_definitions = [
+        {
+          "identifier": "team_history_H_for",
+          "catalogVersionId": team_history_home_for.version_id,
+          "catalogId": team_history_home_for.id,
+          "feature_list_id": team_history_home_for_featurelist.id,
+          "primaryTemporalKey": "Date",
+          "snapshotPolicy": "latest"
+          },
+        {
+        "identifier": "team_history_A_ag",
+        "catalogVersionId": team_history_away_against.version_id,
+        "catalogId": team_history_away_against.id,
+        "feature_list_id": team_history_away_against_featurelist.id,
+        "primaryTemporalKey": "Date",
+        "snapshotPolicy": "latest"
+        }]
+    
+    # Set up feature discovery joins for both home and away teams
+    # use dynamic feature derivation window for predicting various months in advance of game
+      relationships = [
+        {
+        "dataset2Identifier": "team_history_H_for",
+        "dataset1Keys": ["home_team_id"],
+        "dataset2Keys": ["team_id"],
+        "featureDerivationWindowStart": -12,
+        "featureDerivationWindowEnd": -months_ahead,
+        "featureDerivationWindowTimeUnit": "MONTH",
+        "predictionPointRounding": 1,
+        "predictionPointRoundingTimeUnit": "SECOND",
+        },
+        {
+        "dataset2Identifier": "team_history_A_ag",
+        "dataset1Keys": ["away_team_id"],
+        "dataset2Keys": ["opposition_team_id"],
+        "featureDerivationWindowStart": -12,
+        "featureDerivationWindowEnd": -months_ahead,
+        "featureDerivationWindowTimeUnit": "MONTH",
+        "predictionPointRounding": 1,
+        "predictionPointRoundingTimeUnit": "SECOND",
+        },
+        ]
+    else:
+      # set up feature discovery definitions for predicting away score=
+      dataset_definitions = [
+        {
+          "identifier": "team_history_H_ag",
+          "catalogVersionId": team_history_home_against.version_id,
+          "catalogId": team_history_home_against.id,
+          "feature_list_id": team_history_home_against_featurelist.id,
+          "primaryTemporalKey": "Date",
+          "snapshotPolicy": "latest"
+          },
+        {
+          "identifier": "team_history_A_for",
+          "catalogVersionId": team_history_away_for.version_id,
+          "catalogId": team_history_away_for.id,
+          "feature_list_id": team_history_away_for_featurelist.id,
+          "primaryTemporalKey": "Date",
+          "snapshotPolicy": "latest"
+          },
+          ]
+      
+      # Set up feature discovery joins for both home and away teams
+      # use dynamic feature derivation window for predicting various months in advance of game
+      relationships = [
+        {
+          "dataset2Identifier": "team_history_H_ag",
+          "dataset1Keys": ["home_team_id"],
+          "dataset2Keys": ["opposition_team_id"],
+          "featureDerivationWindowStart": -12,
+          "featureDerivationWindowEnd": -months_ahead,
+          "featureDerivationWindowTimeUnit": "MONTH",
+          "predictionPointRounding": 1,
+          "predictionPointRoundingTimeUnit": "SECOND",
+          },
+        {
+          "dataset2Identifier": "team_history_A_for",
+          "dataset1Keys": ["away_team_id"],
+          "dataset2Keys": ["team_id"],
+          "featureDerivationWindowStart": -12,
+          "featureDerivationWindowEnd": -months_ahead,
+          "featureDerivationWindowTimeUnit": "MONTH",
+          "predictionPointRounding": 1,
+          "predictionPointRoundingTimeUnit": "SECOND",
+          },
+          ]
+                                        
+    relationship_config = dr.RelationshipsConfiguration.create(
+      dataset_definitions=dataset_definitions, 
+      relationships=relationships)
+        
+    # set up date-time partitioning
+    partitioning_spec = dr.DatetimePartitioningSpecification(
+      datetime_partition_column="Date",
+      gap_duration="P0Y",
+      holdout_start_date=datetime(2020,2,28),
+      holdout_end_date=datetime(2021,7,9),
+      number_of_backtests=1,
+      use_time_series=False)
+    
+    # set up specific backtest segments
+    partitioning_spec.backtests=[dr.BacktestSpecification(
+      0, # backtest 1 index
+      gap_duration="P0Y",
+      validation_start_date=datetime(2019,2,28),
+      validation_duration = "P1Y"),]
+      # # more if needed....
+      # dr.BacktestSpecification(
+      #   1, # backtest 2 index
+      #   gap_duration = 0,
+      #   validation_start_date=datetime(2021,2,21),
+      #   validation_duration = 'P1Y0M0DT0H0M0S')]
+    
+    # create project
+    project = dr.Project.create(
+      sourcedata=primary_table,
+      project_name = f"MLS_game_projections_months_ahead_{months_ahead}_home{home_indicator}",
+      dataset_filename="team_results_primary.csv")
+    
+    # view features
+    [feat_list.name for feat_list in project.get_features()]
+                                                      
+    # create a new feature list
+    project.create_featurelist(
+      "Model features",
+      ["Date (Month)", "Date (Day of Week)", "Date (Year)"])
+      
+      # get feature list id
+    model_featurelistid = [feat_list.id for feat_list in project.get_featurelists() if feat_list.name == "Model features"][0]
+    try:
+      project.set_target(
+        target="home_score" if home_indicator==1 else "away_score",
+        metric="Poisson Deviance",
+        worker_count=-1, # -1 implies max workers available
+        mode=dr.enums.AUTOPILOT_MODE.FULL_AUTO, # or .FULL_AUTO, .MANUAL, .COMPREHENSIVE
+        featurelist_id=model_featurelistid,
+        relationships_configuration_id=relationship_config.id,
+        partitioning_method=partitioning_spec,
+        max_wait=5000)
+    except:
+      return f"There was an error with {months_ahead} months ahead and home indicator {home_indicator}."
+      
+    return project
+  
+  else:
+    return f"The project with {months_ahead} months ahead and home indicator {home_indicator} has already been created."
+```
+## Kick off projects in parallel
+Using the dask module, we queue and delay the function we wrote above to start project for combinations of months ahead and home vs. away. When each project has been queued, we run them all with the compute() function.
+```{python start_projects_in_parallel}
+# queue projects
+delayed_dr_projects = []
+for months_ahead in [0,1,2,3]:
+  for home_indicator in [0,1]:
+    temp = delayed(run_dr)(months_ahead, home_indicator)
+    delayed_dr_projects.append(temp)
+
+# run projects in parallel
+projects = compute(delayed_dr_projects)[0]
+
+# filter to the projects that did not throw errors
+projects_filtered = [project for project in projects if not isinstance(project, str)]
+
+# wait for all autopilots to finish
+for key in range(0,len(projects_filtered)):
+    projects_filtered[key].wait_for_autopilot()
+```
+
+
+
