@@ -71,7 +71,7 @@ The DataRobot API Endpoint is used to connect your IDE to DataRobot.
 
 - *Getting Predictions and Prediction Explanations:* how to get predictions and prediction explanations out of a trained model. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Making%20Predictions/Python/Getting%20Predictions%20and%20Prediction%20Explanations.ipynb) [R](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Making%20Predictions/R/Getting%20Predictions%20and%20Prediction%20Explanations.Rmd)
 
-- *Scoring Big Datasets - Batch Prediction API:* how to use DataRobot's batch prediction script to get predictions out of a DataRobot deployed model. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Making%20Predictions/Python/Scoring%20Big%20Datasets--Batch%20Prediction%20API.ipynb) 
+- *Batch Prediction API:* how to use DataRobot's batch prediction API to get predictions out of a DataRobot deployed model. [Python](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Making%20Predictions/Python/Batch%20Prediction%20API.ipynb) 
 
 - *Prediction Explanation Clustering:*  creating clusters of prediction explanations to better understand patterns in your data. [R](https://github.com/datarobot-community/examples-for-data-scientists/blob/master/Making%20Predictions/R/PredictionExplanationClustering.Rmd)
 
