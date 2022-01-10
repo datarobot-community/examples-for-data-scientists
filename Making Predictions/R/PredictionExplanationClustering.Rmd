@@ -8,8 +8,8 @@ This notebook is intended to accompany the [*Prediction Explanation Clustering w
 # Installing the Package
 
 ```{r}
-if (!require("devtools")) { install.packages("devtools") }
-if (!require("datarobot.pe.clustering")) { devtools::install_github("datarobot-community/pe-clustering-R", build_vignettes=TRUE) }
+if (!require("remotes")) { install.packages("remotes") }
+if (!require("datarobot.pe.clustering")) { remotes::install_github("datarobot-community/pe-clustering-R", build_vignettes=TRUE, upgrade = "never") }
 ```
 
 # Loading libraries
