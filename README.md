@@ -30,9 +30,8 @@ The DataRobot API Endpoint is used to connect your IDE to DataRobot.
 
 ## Important Links
 
-- To learn to use DataRobot, visit [DataRobot University](https://university.datarobot.com/)
-- For General articles on DataRobot and news, visit [DataRobot Community](https://community.datarobot.com/)
-- End to end DataRobot API [Tutorials for Data Scientists](https://github.com/datarobot-community/tutorials-for-data-scientists)
+- To learn how to use DataRobot and gain practical data science education, visit [DataRobot University](https://university.datarobot.com/)
+- To ask questions and get help from DataRobot experts and peers, visit [DataRobot Community](https://community.datarobot.com/)
 
 ## Contents
 
