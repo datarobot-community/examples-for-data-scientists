@@ -4,6 +4,14 @@ This repository contains Python notebooks and R Markdown guides for achieving sp
 
 Start learning with the [API Training](https://github.com/datarobot-community/tutorials-for-data-scientists/tree/master/DRU/API_Training) module.
 
+Additional code examples can be accessed from the following locations:
+
+- [Tutorials for data scientists repo](https://github.com/datarobot-community/tutorials-for-data-scientists/)
+- [AI Engineering repo](https://github.com/datarobot-community/ai_engineering)
+- [docs.datarobot.com](https://docs.datarobot.com/en/docs/api/code-examples/index.html)
+- [R Vignettes included in the R client](https://cran.r-project.org/web/packages/datarobot/index.html)
+- [Examples included in the Python client](https://datarobot-public-api-client.readthedocs-hosted.com/en/v2.27.1/examples/index.html)
+
 ## Usage
 
 For each respective guide, follow the instructions in its own `.ipynb` or `.Rmd` file. 
