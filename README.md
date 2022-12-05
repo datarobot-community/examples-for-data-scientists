@@ -1,5 +1,10 @@
 # API Samples for Data Scientists
 
+## IMPORTANT
+The code in this repo is sourced from the DataRobot user community and is not owned or maintained by DataRobot, Inc. You may need to make edits or updates for this code to function properly in your environment.
+
+## Description
+
 This repository contains Python notebooks and R Markdown guides for achieving specific tasks using the API.
 
 Start learning with the [API Training](https://github.com/datarobot-community/tutorials-for-data-scientists/tree/master/DRU/API_Training) module.
